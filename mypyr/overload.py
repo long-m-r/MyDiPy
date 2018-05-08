@@ -62,10 +62,8 @@ def overload(func: Callable) -> Callable:
     return call
 
 def overloaded(cls : Type) -> Type:
-    print('Class '+cls.__qualname__)
-    print(_overload_library)
-    for k in _overload_library:
+    keys=list(_overload_library.keys())
+    for k in keys:
         if k.startswith(cls.__qualname__):
             del _overload_library[k]
-    print(_overload_library)
     return cls

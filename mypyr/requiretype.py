@@ -1,6 +1,6 @@
-from typing import Callable, Type, Any, Mutable, Iterable
+from typing import Callable, Type, Any, Iterable, Mapping
 from functools import wraps
-from inspect import Signature,signature, _VAR_KEYWORD,_KEYWORD_ONLY,_VAR_POSITIONAL,_POSITIONAL_ONLY,_POSITIONAL_OR_KEYWORD,_empty
+from inspect import Signature,signature, _VAR_KEYWORD,_KEYWORD_ONLY,_VAR_POSITIONAL,_POSITIONAL_ONLY,_POSITIONAL_OR_KEYWORD,_empty, isclass
 from itertools import chain
 
 def requiretype(obj):
@@ -20,7 +20,7 @@ def _requiretypefunc(func: Callable) -> Callable:
 def _apply_function_all_methods(aply: Callable, flag: str, obj):
     """helper function to apply a decorator type function to a function or all methods with annotations in a class"""
     # If it's a class
-    if isinstance(obj, Type):
+    if isclass(obj):
         # Loop through methods
         for fname in dir(obj):
             func = getattr(obj, fname)

@@ -1,0 +1,17 @@
+# Create Virtual Environment
+echo "Creating $(/usr/bin/python3 --version) Virtual Enviornment"
+/usr/bin/python3 -m venv venv
+source venv/bin/activate
+
+# Update PIP (some installations fail with older version)
+echo "Updating pip"
+pip install -U pip
+
+# Install our package
+pip install -e .
+
+# Display Final PIP Configuration
+echo "Final Installation Configuration:"
+pip list --format=columns
+
+

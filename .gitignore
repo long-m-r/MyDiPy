@@ -103,6 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Ignore _ starting folders
+# Ignore _ starting folders and our submodules folder (for now)
 _*/
-/submodules/
