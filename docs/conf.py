@@ -24,7 +24,7 @@ copyright = '2018, Matthew Long'
 author = 'Matthew Long'
 
 # The short X.Y version
-version = '0.1.1'
+version = '0.1.2'
 # The full version, including alpha/beta/rc tags
 release = ''
 

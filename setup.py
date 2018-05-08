@@ -5,7 +5,7 @@ if sys.version_info < (3,5):
 
 setup(
     name='MyPyR',
-    version='0.1.1',
+    version='0.1.2',
     description='Runtime-enforced type checking, casting, and overloads for Python 3',
     author='Matthew Long',
     # author_email='null@null.com',
