@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Create Virtual Environment
+echo "Creating Virtual Enviornment"
+pyenv virtualenv 3.6.5 MyPyR-3.6.5
+pyenv local MyPyR-3.6.5
+
+# Update PIP (some installations fail with older version)
+echo "Updating pip"
+pip install -U pip | sed 's/^/  /'
+
+# Install our package
+echo "Installing local package"
+pip install -e .[build] | sed 's/^/  /'
+
+# Display Final PIP Configuration
+echo "Final Installation Configuration:"
+pip list --format=columns | sed 's/^/  /'
+
+

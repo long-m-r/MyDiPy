@@ -12,4 +12,7 @@ setup(
     license='MIT',
     packages=['mypyr'],
     # install_requires=['']
+    extras_require={
+        'build': ["sphinx-autodoc-typehints","mypy","pyannotate"],
+    }
 )

@@ -1,12 +1,48 @@
-from typing import Callable, Type, Any, Iterable, Mapping
+from typing import Callable, Type, Any, Union
 from functools import wraps
 from inspect import Signature,signature, _VAR_KEYWORD,_KEYWORD_ONLY,_VAR_POSITIONAL,_POSITIONAL_ONLY,_POSITIONAL_OR_KEYWORD,_empty, isclass
 from itertools import chain
 
 def requiretype(obj):
+    """
+    requiretype()
+    A decorator which will automatically type check all parameters
+    which are typed according to `PEP 484 <https://www.python.org/dev/peps/pep-0484/>`_
+
+    If a function or method has no typing annotations, the function is returned directly.
+    If a class is passed, all methods which contain typing annotations are typed.
+
+    When the decorated function is called, parameter values which are not instances of the
+    defined types will raise `TypeError`.
+
+    Examples:
+        An example on applying to a specific function (or class method)
+
+        >>> @requiretype
+        >>> def typed_function(a: int) -> int:
+        ...     return a
+        ...
+        >>> typed_function(1)
+        1
+        >>> typed_function("string")
+        TypeError: type mismatch for argument 'a'. Got <class 'str'>, needed "<class 'int'>"
+
+    Raises:
+        TypeError: If there is a mismatch between a typed parameter and a passed argument
+
+    Note:
+        Functions/methods decorated with `@requiretype` accept an optional named argument `_returns`
+        which can be used to specify the return type. Note that only the
+        annotation of the return value is checked, the return value is not dynamically checked
+        at runtime. This argument is necessary for `@overload` but is not particularly useful
+        here.
+
+        Functions/methods used with `@requiretype` or `@overload` should not have any parameters named `_returns`.
+
+    """
     return _apply_function_all_methods(_requiretypefunc,'__typed__',obj)
 
-def _requiretypefunc(func: Callable) -> Callable:
+def _requiretypefunc(func):
     func.__signature__=signature(func)
 
     @wraps(func)
@@ -17,7 +53,7 @@ def _requiretypefunc(func: Callable) -> Callable:
         return func(*args,**kwargs)
     return wrapper
 
-def _apply_function_all_methods(aply: Callable, flag: str, obj):
+def _apply_function_all_methods(aply, flag: str, obj):
     """helper function to apply a decorator type function to a function or all methods with annotations in a class"""
     # If it's a class
     if isclass(obj):
@@ -46,7 +82,7 @@ def _apply_function_all_methods(aply: Callable, flag: str, obj):
 # >> Handle checking with type annotations
 # >> Remove return mapping (unnecessary, performance impact)
 # >> Raise TypeError if the arguments cannot be mapped to the parameters
-def _bind_check(sig: Signature, args: Iterable, kwargs: Mapping, return_type: Type = Any) -> None:
+def _bind_check(sig, args, kwargs, return_type = Any):
     """Private method. Don't use directly."""
     if return_type is not Any and not issubclass(sig.return_annotation,return_type):
         raise TypeError("function cannot return {ret!r}".format(ret=return_type)) from None

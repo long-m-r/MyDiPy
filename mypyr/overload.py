@@ -6,10 +6,48 @@ from .requiretype import requiretype
 _overload_library=ddict(lambda: (list(), ddict(set)))
 
 def overload(func: Callable) -> Callable:
-    # TODO: Is this key sufficiently unique? I'd prefer to store it in the class itself but that won't work with a single @overload decorator
-    key = getattr(func,'__qualname__')
+    """A decorator which allows a class method to be defined multiple times to
+    accept different data types for both arguments and return values.
+    Iterates through the overloaded methods and identifies the FIRST instance
+    whose parameters AND types match the passed arguments
 
-    # We absolutely need to do requiretypes to pick the correct method. Decorated.
+    Args:
+        func : A method or function to overload.
+
+    Example:
+        A basic example of an overloaded function:
+
+        >>> @overload
+        ... def a(i: int) -> str: return "Integer"
+        ...
+        >>> @overload
+        ... def a(i: str): return "String"
+        ...
+        >>> @overload
+        ... def a(i: int) -> int: return 1
+        ...
+        >>> a(0)
+        'Integer'
+        >>> a(0,_returns=int)
+        1
+        >>> a("test")
+        'String'
+        >>> a("test",_returns=str)
+        TypeError: unable to find a valid overloaded function
+        >>> a(0.1)
+        TypeError: unable to find a valid overloaded function
+
+    Raises:
+        TypeError: If no overloaded method can be found which matches the data types in a function call
+
+    Note:
+        Un-typed parameters are assumed to accept any type; however, no assumptions are made about the return types.
+        If `_returns` is specified, only functions with correspondingly annotated return types will be matched.
+    """
+    if not isinstance(func,Callable):
+        raise TypeError('Only functions and methods can be used with @overload')
+
+    key = getattr(func,'__qualname__')
     newfunc = requiretype(func)
 
     # Add function and annotation to library
@@ -53,7 +91,7 @@ def overload(func: Callable) -> Callable:
                     return result
 
         # If we make it here, we've run out of options.
-        raise TypeError("unable to find a valid function")
+        raise TypeError("unable to find a valid overloaded function")
 
     # Annotate our function accordingly
     setattr(call,'__annotations__',{k:tuple(v) for k,v in _overload_library[key][1].items()})
@@ -62,6 +100,18 @@ def overload(func: Callable) -> Callable:
     return call
 
 def overloaded(cls : Type) -> Type:
+    """A class decorator which cleans up the global library of overload functions.
+    Highly recommended for any class which contain `@overload` methods.
+
+    Args:
+        cls : A class which contains `@overload` methods
+
+    Note:
+        The cls is passed back unchanged, but the global namespace is cleaned up.
+    """
+    if not isinstance(cls,Type):
+        raise TypeError('Only classes can be used with @overloaded')
+
     keys=list(_overload_library.keys())
     for k in keys:
         if k.startswith(cls.__qualname__):
