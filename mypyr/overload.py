@@ -1,119 +1,123 @@
+from .type_check import type_check, TypeCheckError
+from inspect import isfunction
 from functools import wraps
-from typing import Callable, Type
+# from typing import Callable, Type
 from collections import defaultdict as ddict
-from .requiretype import requiretype
 
-_overload_library=ddict(lambda: (list(), ddict(set)))
+from typing import Callable, Iterable
 
-def overload(func: Callable) -> Callable:
-    """A decorator which allows a class method to be defined multiple times to
-    accept different data types for both arguments and return values.
-    Iterates through the overloaded methods and identifies the FIRST instance
-    whose parameters AND types match the passed arguments
+def _merge_annotations(curr,new):
+    # Merge annotations by items in new
+    for k,v in new.__annotations__.items():
+        # Get a set of the annotations
+        nv = set(v) if isinstance(v,Iterable) else set([v])
 
-    Args:
-        func : A method or function to overload.
+        ov = curr.__annotations__.get(k,[])
 
-    Example:
-        A basic example of an overloaded function:
+        # Merge existing annotations with new ones
+        nv |= set(ov) if isinstance(ov,Iterable) else set([ov])
 
-        >>> @overload
-        ... def a(i: int) -> str: return "Integer"
-        ...
-        >>> @overload
-        ... def a(i: str): return "String"
-        ...
-        >>> @overload
-        ... def a(i: int) -> int: return 1
-        ...
-        >>> a(0)
-        'Integer'
-        >>> a(0,_returns=int)
-        1
-        >>> a("test")
-        'String'
-        >>> a("test",_returns=str)
-        TypeError: unable to find a valid overloaded function
-        >>> a(0.1)
-        TypeError: unable to find a valid overloaded function
+        # Apply
+        curr.__annotations__[k] = tuple(nv)
 
-    Raises:
-        TypeError: If no overloaded method can be found which matches the data types in a function call
-
-    Note:
-        Un-typed parameters are assumed to accept any type; however, no assumptions are made about the return types.
-        If `_returns` is specified, only functions with correspondingly annotated return types will be matched.
-    """
-    if not isinstance(func,Callable):
-        raise TypeError('Only functions and methods can be used with @overload')
-
-    key = getattr(func,'__qualname__')
-    newfunc = requiretype(func)
-
-    # Add function and annotation to library
-    _overload_library[key][0].append(newfunc)
-    for k,v in func.__annotations__.items():
-        if isinstance(v,tuple):
-            _overload_library[key][1][k] |= set(v)
+    # Merge docstrings as well, if there are any
+    if new.__doc__ is not None:
+        if curr.__doc__ is None:
+            curr.__doc__ = new.__doc__
         else:
-            _overload_library[key][1][k].add(v)
+            curr.__doc__ += "\n\n"+new.__doc__
 
-    # Get a local pointer from our global so the global can be cleaned later
-    library=_overload_library[key]
+class _overload_dict(dict):
+    """Private function. Don't use directly."""
+    # Used in `OverloadableMeta.__prepare__(...)`
+    #
+    # Creates a dictionary which will automatically create an overloaded
+    # function when `@overload` decorated functions or auto_overload=True
+    # are overwritten (added to the dictionary 2+ times)
 
-    # Caller function
-    @wraps(func)
-    def call(*args,**kwargs):
-        result = None
+    def __init__(self,*args,**kwargs):
+        # Create local dictionary to store our overloads
+        self._overloads={}
 
-        # Loop through each function
-        for f in library[0]:
-            try:
-                # Get the result
-                result = f(*args,**kwargs)
-            except TypeError as e:
-                # The function didn't match
-                pass
-            else:
-                # If it's ..., we want to perform a lookup to our inherited classes
-                if result is Ellipsis:
-                    # Look through each base and try to call the same function there
-                    for base in args[0].__class__.__bases__:
+        # Flag to see if only overloading `@overload` functions or all multiply defined functions
+        self._auto_overload=kwargs.pop('auto_overload',False)
+
+        # Initialize normally
+        super().__init__(*args,**kwargs)
+
+    def __setitem__(self,key,val):
+        if isfunction(val) and key in self and isfunction(self[key]):
+            # We only need to check functions for overloadedness if there's already one defined
+
+            # Flag indicating if the new function should be overloaded
+            oflag = getattr(val,'__overload__',self._auto_overload)
+
+            if key in self._overloads and oflag:
+                # It's already been overloaded, simply add to end and exit
+                self._overloads[key].append(type_check(val))
+
+                # Update the annotations/docstrings
+                _merge_annotations(self[key],val)
+
+                # Leave without actually changing the value
+                return
+            elif oflag and getattr(self[key],'__overload__',self._auto_overload):
+                # We've got ourselves some brand new overloaded functions
+
+                # List of functions to try
+                funcs = [type_check(self[key]),type_check(val)]
+                self._overloads[key] = funcs
+
+                # Wrapper method which tries them in series
+                @wraps(self[key])
+                def wrapper(*args,**kwargs):
+                    for f in funcs:
                         try:
-                            result = getattr(base,func.__name__)(*args,**kwargs)
-                            break
-                        except:
-                            # We don't care why it didn't work
+                            return f(*args,**kwargs)
+                        except TypeCheckError:
                             pass
-                # If we have any other result, return it. We can optionally type-check here if we are really pedantic
+                    raise NotImplementedError("could not find valid @overload function for '"+funcs[0].__qualname__+"'")
+                wrapper.__typed__ = True
 
-                else:
-                    return result
+                # Update the annotations/docstrings
+                _merge_annotations(wrapper,val)
+                # Change the value we want in the dictionary
+                val = wrapper
 
-        # If we make it here, we've run out of options.
-        raise TypeError("unable to find a valid overloaded function")
+        # Go ahead and set the item in the dictionary
+        super().__setitem__(key,val)
 
-    # Annotate our function accordingly
-    setattr(call,'__annotations__',{k:tuple(v) for k,v in _overload_library[key][1].items()})
-    setattr(call,'__typed__',True)
+class OverloadableMeta(type):
+    def __prepare__(name, bases, **kwds):
+        # Dictionary that handles @overload methods intelligently
+        auto_overload=kwds.pop('auto_overload',False)
+        return _overload_dict(auto_overload=auto_overload)
 
-    return call
+    def __new__(metacls, name, bases, namespace, **kwds):
+    #     # We need to look for @inherit tags
+    #     for k,v in namespace.items():
+    #         if getattr(v,'__overloaded__',False):
+    #             for f in v.__functions__:
+    #                 if getattr(f,'__inherits__',False) == [Ellipsis]:
+    #                     f.__inherits__.remove(Ellipsis)
+    #                     for b in bases:
+    #                         if hasattr(b,f.__name__):
+    #                             f.__inherits__.append(b)
+    #         elif getattr(v,'__inherits__',False) == [Ellipsis]:
+    #             v.__inherits__.remove(Ellipsis)
+    #             for b in bases:
+    #                 if hasattr(b,v.__name__):
+    #                     v.__inherits__.append(b)
 
-def overloaded(cls : Type) -> Type:
-    """A class decorator which cleans up the global library of overload functions.
-    Highly recommended for any class which contain `@overload` methods.
+        return type.__new__(metacls, name, bases, namespace)
 
-    Args:
-        cls : A class which contains `@overload` methods
+class OverloadableObject(metaclass=OverloadableMeta):
+    pass
 
-    Note:
-        The cls is passed back unchanged, but the global namespace is cleaned up.
-    """
-    if not isinstance(cls,Type):
-        raise TypeError('Only classes can be used with @overloaded')
+def overload(func):
+    func.__overload__=True
+    return func
 
-    keys=list(_overload_library.keys())
-    for k in keys:
-        if k.startswith(cls.__qualname__):
-            del _overload_library[k]
-    return cls
+# Aliases
+OMeta=OverloadableMeta
+OObject = OverloadableObject

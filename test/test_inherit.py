@@ -18,4 +18,3 @@ class TestInherit(unittest.TestCase):
 		"""Ensure class is inherited"""
 		self.assertTrue(self.clsa.test())
 		self.assertTrue(self.clsb.test())
-		

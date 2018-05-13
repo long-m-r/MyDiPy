@@ -1,5 +1,5 @@
 from typing import Type
-from .overload import overload, overloaded
+from .overload import overload, OMeta
 
 def cast(cls: Type, obj):
     """Attempt to cast an object to a desired type.
@@ -20,10 +20,6 @@ def cast(cls: Type, obj):
 
     # If we have an object which looks castable:
     if hasattr(obj,'__cast__'):
-        # TODO: should we check __casttypes__? Can save execution time but if there is an undefined output catch-all we would never try it. I don't think we want to do this.
-        # if hasattr(obj,'__casttypes__') and c in obj.__casttypes__:
-            # return obj.__cast__(cls,_returns=cls)
-
         # If it is typed, we can specify the return type which is what we want
         if getattr(obj.__cast__,'__typed__',False):
             return obj.__cast__(cls,_returns=cls)
@@ -46,14 +42,18 @@ def cast(cls: Type, obj):
     # We've run out of things to try
     raise TypeError('cannot convert object {obj!r} to {typ!r}'.format(obj=str(obj),typ=str(cls)))
 
-@overloaded
-class castable(object):
+class CastError(TypeError): pass
+
+class castable(metaclass=OMeta):
     @overload
-    def __cast__(self, cls: Type) -> str:
+    def __cast__(self, cls) -> str:
         return self.__str__()
     @overload
-    def __cast__(self, cls: Type):
-        raise TypeError('cannot convert object {inst!r} to {typ!r}'.format(inst=str(self),typ=str(cls)))
-
-    @property
-    def __casttypes__(self) -> tuple:    return self.__cast__.__annotations__['return']
+    def __cast__(self, cls) -> int:
+        return self.__int__()
+    @overload
+    def __cast__(self, cls) -> bool:
+        return self.__nonzero__()
+    @overload
+    def __cast__(self, cls):
+        raise CastError('cannot convert object {inst!r} to {typ!r}'.format(inst=str(self),typ=str(cls)))

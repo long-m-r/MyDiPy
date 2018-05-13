@@ -1,7 +1,9 @@
+from .type_check import TypeCheckError
+from typing import Callable, Type, Union
 from functools import wraps
-from typing import Callable, Type
+from inspect import isfunction, isclass
 
-def inherit(cls: Type) -> Callable:
+def inherit(*cls: Type, errors=(TypeCheckError,NotImplementedError)) -> Callable:
     """A decorator which automatically wraps the underlying function and instead calls a parent class
 
     Args:
@@ -29,24 +31,26 @@ def inherit(cls: Type) -> Callable:
 
     Raises:
         TypeError: If `cls` is not a class
+        NotImplementedError: When the decorated function is called if no method can be found
+
+    TODO:
+        Handle annotations
     """
-    # Manually type check here. It'll be faster than decorator and is really easy here (Don't tell anyone)
-    if not issubclass(cls,Type):
-        raise TypeError("inherit decorator requires a class/object as the argument")
+    if not all(isclass(c) for c in cls):
+        raise TypeError("@inherit(*cls: Type) requires classes/objects as the arguments")
 
-    def wrapper(func: Callable) -> Callable:
-        # Do the lookup now so we can point straight to the function later
-        pfunc = getattr(pclass,func.__name__)
+    # Define the decorator to return
+    def decorator(func):
+        funcs = [getattr(c,func.__name__) for c in cls if hasattr(c,func.__name__)]
 
-        # Our parent function needs to be wrapped in another function so we don't overwrite the parent annotations
         @wraps(func)
-        def fexec(*args,**kwargs):
-            return pfunc(*args,**kwargs)
+        def wrapper(*args,**kwargs):
+            for f in funcs:
+                try:
+                    return f(*args,**kwargs)
+                except errors:
+                    pass
+            raise NotImplementedError("could not find valid @inherit function for '"+funcs[0].__qualname__+"'")
 
-        # Update annotations before returning
-        for k,v in pfunc.__annotations__.items():
-            if k not in fexec.__annotations__:
-                fexec.__annotations__[k]=v
-
-        return fexec
-    return wrapper
+        return wrapper
+    return decorator

@@ -1,10 +1,9 @@
 import unittest
-from mypyr import overload, overloaded, inherit
+from mypyr import overload, OObject, OMeta, inherit
 
 class TestOverload(unittest.TestCase):
 	def setUp(self):
-		@overloaded
-		class A:
+		class A(OObject):
 			def __init__(self):
 				self.str="A"
 			@overload
@@ -14,8 +13,7 @@ class TestOverload(unittest.TestCase):
 			@overload
 			def test(self,val): raise ValueError()
 
-		@overloaded
-		class B:
+		class B(OObject):
 			def __init__(self):
 				self.str="B"
 			@overload
@@ -25,20 +23,19 @@ class TestOverload(unittest.TestCase):
 			@overload
 			def test(self, nam): raise ValueError()
 
-		@overloaded
-		class C:
+		class C(OObject,auto_overload=True):
 			def __init__(self):
 				self.str="C"
-			@overload
-			def test(self, res: str, mul: int=3) -> str: return "C="+self.str+":"+res*mul
-			@overload
-			def test(self, nam: int): return "C="+str(nam)
-			@overload
-			def test(self, *args, **kwargs): raise AttributeError()
+
+			def test(self, res: str, mul: int=3) -> str:
+				return "C="+self.str+":"+res*mul
+			def test(self, nam: int):
+				return "C="+str(nam)
+			def test(self, *args, **kwargs):
+				raise AttributeError()
 
 
-		@overloaded
-		class D(A,B,C):
+		class D(A,B,C,metaclass=OMeta):
 			def __init__(self):
 				self.str="D"
 
@@ -52,15 +49,12 @@ class TestOverload(unittest.TestCase):
 			def test(self, val: float) -> int: return -int(val)
 			@overload
 			def test(self, *args: int) -> int: return -sum(args)
-			
 			@overload
 			@inherit(A)
 			def test(self, val: str) -> str: ...
-			
 			@overload
 			@inherit(B)
 			def test(self, nam: str): ...
-
 			@overload
 			@inherit(C)
 			def test(self,*args, **kwargs): ...
@@ -97,4 +91,5 @@ class TestOverload(unittest.TestCase):
 		"""Error out"""
 		with self.assertRaises(AttributeError):	self.cls.test([])
 		with self.assertRaises(AttributeError):	self.cls.test(1,2,3,"h")
-		with self.assertRaises(TypeError):  self.cls.test(val="a",_returns=float)
+		with self.assertRaises(AttributeError): self.cls.test(val="a",_returns=float)
+		# with self.assertRaises(ValueError): self.cls.test(nam="a",_returns=float)
