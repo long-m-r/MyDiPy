@@ -82,7 +82,9 @@ class _overload_dict(dict):
                     for i,f in enumerate(funcs):
                         fu = getattr(f,'__followup__',False)
                         if fu:
-                            funcs[i]=fu(*args,**kwargs)
+                            newkwargs = dict(kwargs)
+                            newkwargs['current']=f
+                            funcs[i]=fu(*args,**newkwargs)
                     return wrapper
 
                 wrapper.__followup__=followup

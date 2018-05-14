@@ -53,16 +53,6 @@ class CastableMeta(OverloadableMeta):
         kwds['auto_overload_dict']={'__cast__': True}
         return OverloadableMeta.__prepare__(name, bases, **kwds)
 
-    def __new__(metacls, name, bases, namespace, **kwds):
-
-        # @overload
-        # @inherit(errors=TypeCheckError)
-        # def __cast__(self, cls: Type): ...
-
-        # namespace['__cast__'] = __cast__
-
-        return OverloadableMeta.__new__(metacls, name, bases, namespace, **kwds)
-
 class CastableObject(metaclass=CastableMeta):
     def __cast__(self, cls: Type) -> str:
         return self.__str__()

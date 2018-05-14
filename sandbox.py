@@ -3,7 +3,6 @@ from mypyr import *
 class test(CastableObject):
     def __cast__(self, cls) -> int: return "Integer"
     def __cast__(self, cls) -> bool: return "Boolean"
-
     @inherit
     def __cast__(self, cls): ...
 

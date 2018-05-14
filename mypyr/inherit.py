@@ -55,7 +55,6 @@ def inherit(*args,errors=(TypeCheckError,NotImplementedError)):
     # Define the wrapper for the function
     def wrapper(*args,**kwargs):
         for f in _funcs:
-            print(_funcs)
             try:
                 return f(*args,**kwargs)
             except errors:
@@ -64,11 +63,9 @@ def inherit(*args,errors=(TypeCheckError,NotImplementedError)):
 
     # Define a followup script to populate bases if not known
     def followup(current, bases, **kwargs):
-        print(bases,current)
         if len(_bases)==0:
             _bases.extend(bases)
         _funcs.extend([getattr(b,_wrapped[0].__name__) for b in _bases if hasattr(b,_wrapped[0].__name__)])
-        print(_funcs)
         del current.__followup__
 
         return current
