@@ -148,7 +148,11 @@ def _bind_check(sig, args, kwargs, return_type = Any) -> None:
     # Modified from inspect.Signature._bind to streamline performance and enforce type checking
     # Raises:
     #   TypeCheckError: If the args/kwargs cannot be successfully mapped to the function signature sig
-    if return_type is not Any and not issubclass(sig.return_annotation,return_type):
+    if return_type is Any:
+        pass
+    elif return_type is None and (sig.return_annotation is not None or None not in sig.return_annotation):
+        raise TypeCheckError("function cannot return {ret!r}".format(ret=return_type)) from None
+    elif not issubclass(sig.return_annotation,return_type):
         raise TypeCheckError("function cannot return {ret!r}".format(ret=return_type)) from None
 
     parameters = iter(sig.parameters.values())

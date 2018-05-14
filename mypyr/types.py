@@ -1,11 +1,10 @@
 from abc import ABCMeta, abstractmethod
 import typing
-from inspect import isfunction
+from inspect import isfunction, isclass
 # Abstract types
 class Castable(metaclass=ABCMeta):
     @abstractmethod
     def __cast__(self, cls: typing.Type): ...
-
 
 class _FunctionMeta(ABCMeta):
     def __instancecheck__(self,obj):

@@ -1,5 +1,7 @@
-from typing import Type
-from .overload import overload, OMeta
+from .type_check import TypeCheckError
+from .overload import overload, OverloadableMeta
+from .inherit import inherit
+from typing import Type, Any
 
 def cast(cls: Type, obj):
     """Attempt to cast an object to a desired type.
@@ -15,7 +17,9 @@ def cast(cls: Type, obj):
         The object cast to the target class
     """
     # If we are already done. Do nothing (HALLELUJAH!):
-    if isinstance(obj,cls):
+    if cls is Any:
+        return obj
+    elif isinstance(obj,cls):
         return obj
 
     # If we have an object which looks castable:
@@ -42,18 +46,33 @@ def cast(cls: Type, obj):
     # We've run out of things to try
     raise TypeError('cannot convert object {obj!r} to {typ!r}'.format(obj=str(obj),typ=str(cls)))
 
-class CastError(TypeError): pass
+class CastError(TypeError,NotImplementedError): pass
 
-class castable(metaclass=OMeta):
-    @overload
-    def __cast__(self, cls) -> str:
+class CastableMeta(OverloadableMeta):
+    def __prepare__(name, bases, **kwds):
+        kwds['auto_overload_dict']={'__cast__': True}
+        return OverloadableMeta.__prepare__(name, bases, **kwds)
+
+    def __new__(metacls, name, bases, namespace, **kwds):
+
+        # @overload
+        # @inherit(errors=TypeCheckError)
+        # def __cast__(self, cls: Type): ...
+
+        # namespace['__cast__'] = __cast__
+
+        return OverloadableMeta.__new__(metacls, name, bases, namespace, **kwds)
+
+class CastableObject(metaclass=CastableMeta):
+    def __cast__(self, cls: Type) -> str:
         return self.__str__()
-    @overload
-    def __cast__(self, cls) -> int:
-        return self.__int__()
-    @overload
-    def __cast__(self, cls) -> bool:
+    def __cast__(self, cls: Type) -> bool:
         return self.__nonzero__()
-    @overload
-    def __cast__(self, cls):
+    def __cast__(self, cls: Type) -> int:
+        return self.__int__()
+    def __cast__(self, cls: Type):
         raise CastError('cannot convert object {inst!r} to {typ!r}'.format(inst=str(self),typ=str(cls)))
+
+# Aliases
+CMeta = CastableMeta
+CObject = CastableObject
