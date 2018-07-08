@@ -1,13 +1,12 @@
 from functools import wraps
 from itertools import chain
-from typing import Any
+from typing import Any, Type
 from collections import defaultdict as ddict
 
 from inspect import Signature, signature, isclass, isfunction, \
     _VAR_KEYWORD,_KEYWORD_ONLY,_VAR_POSITIONAL,_POSITIONAL_ONLY,_POSITIONAL_OR_KEYWORD,_empty
 
 class TypeCheckError(TypeError): pass
-
 
 # Define our decorators
 def no_type_check(obj):
@@ -114,6 +113,7 @@ def type_check(obj):
             obj.__typed__=True #Technically is typed, just against nothing
             return obj
         # Function will need a signature
+        obj.__annotations__['_returns']=Type
         objsig=signature(obj)
 
         # Create the wrapper function
@@ -149,6 +149,9 @@ def _bind_check(sig, args, kwargs, return_type = Any) -> None:
     # Raises:
     #   TypeCheckError: If the args/kwargs cannot be successfully mapped to the function signature sig
     if return_type is Any:
+        pass
+    elif sig.return_annotation is _empty:
+        # Return annotation is unspecified, so this COULD be valid. Try it.
         pass
     elif return_type is None and (sig.return_annotation is not None or None not in sig.return_annotation):
         raise TypeCheckError("function cannot return {ret!r}".format(ret=return_type)) from None

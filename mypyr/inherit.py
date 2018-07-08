@@ -1,11 +1,10 @@
 from .type_check import TypeCheckError
-from .overload import OMeta, overload
 from .types import Function
 from typing import Type
 from functools import wraps
 from inspect import isfunction
 
-def inherit(*args,errors=(TypeCheckError,NotImplementedError)):
+def inherit(*args,errors=TypeCheckError):
     """A decorator which automatically wraps the underlying function and instead calls a parent class
 
     Args:
@@ -47,49 +46,40 @@ def inherit(*args,errors=(TypeCheckError,NotImplementedError)):
     TODO:
         Handle annotations
     """
-    _bases = []
-    _funcs = []
-    _errors = errors
-    _wrapped = []
+    bases = []
+    funcs = []
+    wrapped = []
 
     # Define the wrapper for the function
     def wrapper(*args,**kwargs):
-        for f in _funcs:
+        if len(bases)==0:
+            # We don't have any bases, extract from the object
+            bases.extend(args[0].__class__.__bases__)
+
+        if len(funcs)==0:
+            # Extract functions from the bases
+            funcs.extend([getattr(b,wrapped[0].__name__) for b in bases if hasattr(b,wrapped[0].__name__)])
+
+        for f in funcs:
             try:
                 return f(*args,**kwargs)
             except errors:
                 pass
-        raise NotImplementedError("could not find valid @inherit method for "+_wrapped[0].__qualname__)
-
-    # Define a followup script to populate bases if not known
-    def followup(current, bases, **kwargs):
-        if len(_bases)==0:
-            _bases.extend(bases)
-        _funcs.extend([getattr(b,_wrapped[0].__name__) for b in _bases if hasattr(b,_wrapped[0].__name__)])
-        del current.__followup__
-
-        return current
-
-    # Assign the followup script to the wrapper
-    wrapper.__followup__ = followup
+        raise NotImplementedError("could not find valid @inherit method for "+wrapped[0].__qualname__)
 
     # Create a decorator for the function
     def decorator(func: Function):
         res = wraps(func)(wrapper)
-        res.__followup__ = followup
-        _wrapped.append(func)
+        wrapped.append(func)
         return res
 
-    # If it's being called to decorate a function
     if len(args)==1 and isfunction(args[0]):
+        # If it's being called to decorate a function
         return decorator(*args)
-
-    # If it's being called with bases and/or errors defined
     elif all(isinstance(a,Type) for a in args):
-        _bases.extend(args)
+        # If it's being called with bases and/or errors defined
+        bases.extend(args)
         return decorator
-
-    # If it's being called with invalid arguments
     else:
         raise TypeError("invalid usage of @inherit")
 

@@ -11,7 +11,7 @@ setup(
     # author_email='null@null.com',
     license='MIT',
     packages=['mypyr'],
-    # install_requires=['']
+    install_requires=['infix'],
     extras_require={
         'build': ["sphinx-autodoc-typehints","mypy","pyannotate"],
     }

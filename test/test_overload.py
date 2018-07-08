@@ -1,9 +1,9 @@
 import unittest
-from mypyr import overload, OObject, OMeta, inherit
+from mypyr import overload, TypedObject, inherit
 
 class TestOverload(unittest.TestCase):
 	def setUp(self):
-		class A(OObject):
+		class A(TypedObject):
 			def __init__(self):
 				self.str="A"
 			@overload
@@ -13,17 +13,14 @@ class TestOverload(unittest.TestCase):
 			@overload
 			def test(self,val): raise ValueError()
 
-		class B(OObject):
+		class B(TypedObject):
 			def __init__(self):
 				self.str="B"
-			@overload
 			def test(self, nam: str) -> str: return "B="+self.str 
-			@overload
 			def test(self, nam: int): return "B="+str(int)
-			@overload
 			def test(self, nam): raise ValueError()
 
-		class C(OObject,auto_overload=True):
+		class C(TypedObject):
 			def __init__(self):
 				self.str="C"
 
@@ -35,7 +32,7 @@ class TestOverload(unittest.TestCase):
 				raise AttributeError()
 
 
-		class D(A,B,C,metaclass=OMeta):
+		class D(A,B,C):
 			def __init__(self):
 				self.str="D"
 
@@ -84,7 +81,7 @@ class TestOverload(unittest.TestCase):
 		"""Check annotations of overloaded objects"""
 		a = self.cls.test.__annotations__
 		self.assertSetEqual(set(a['val']),set([int,float,str]))
-		self.assertSetEqual(set(a['nam']),set([str,int]))
+		self.assertSetEqual(set(a['nam']),set([str]))
 		self.assertSetEqual(set(a['return']),set([str,int]))
 
 	def test_3(self):
