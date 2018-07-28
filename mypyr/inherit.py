@@ -1,8 +1,18 @@
-from .type_check import TypeCheckError
+from .type_check import TypeCheckError, type_check
 from .types import Function
 from typing import Type
 from functools import wraps
 from inspect import isfunction
+
+def _filter(func):
+    if getattr(func,'__typed__',False):
+        return func
+
+    def wrapper(*args,**kwargs):
+        kwargs.pop("_returns",None)
+        return func(*args,**kwargs)
+
+    return wraps(func)(wrapper)
 
 def inherit(*args,errors=TypeCheckError):
     """A decorator which automatically wraps the underlying function and instead calls a parent class
@@ -21,7 +31,6 @@ def inherit(*args,errors=TypeCheckError):
         >>> class Child(Parent):
         ...     @inherit
         ...     def test(self,value): ...
-        ...
 
         Calling the 'test' method  from 'Child' results in:
 
@@ -30,10 +39,10 @@ def inherit(*args,errors=TypeCheckError):
         Child>Parent
 
         It is also possible to write Child as:
+
         ... class Child:
         ...     @inherit(Parent)
         ...     def test(self,value): ...
-        ...
 
         Which is functionally identical for the method `test` while no other methods from `Parent` would be inherited.
 
@@ -58,7 +67,7 @@ def inherit(*args,errors=TypeCheckError):
 
         if len(funcs)==0:
             # Extract functions from the bases
-            funcs.extend([getattr(b,wrapped[0].__name__) for b in bases if hasattr(b,wrapped[0].__name__)])
+            funcs.extend([type_check(getattr(b,wrapped[0].__name__)) for b in bases if hasattr(b,wrapped[0].__name__)])
 
         for f in funcs:
             try:
@@ -70,6 +79,7 @@ def inherit(*args,errors=TypeCheckError):
     # Create a decorator for the function
     def decorator(func: Function):
         res = wraps(func)(wrapper)
+        res.__typed__=True
         wrapped.append(func)
         return res
 

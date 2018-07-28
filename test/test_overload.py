@@ -16,11 +16,15 @@ class TestOverload(unittest.TestCase):
 		class B(TypedObject):
 			def __init__(self):
 				self.str="B"
+
+			@overload
 			def test(self, nam: str) -> str: return "B="+self.str 
+			@overload
 			def test(self, nam: int): return "B="+str(int)
+			@overload
 			def test(self, nam): raise ValueError()
 
-		class C(TypedObject):
+		class C(TypedObject,auto_overload=True):
 			def __init__(self):
 				self.str="C"
 
@@ -56,6 +60,7 @@ class TestOverload(unittest.TestCase):
 			@inherit(C)
 			def test(self,*args, **kwargs): ...
 
+		print(B.test.__typed__)
 		self.cls=D()
 
 
@@ -89,4 +94,4 @@ class TestOverload(unittest.TestCase):
 		with self.assertRaises(AttributeError):	self.cls.test([])
 		with self.assertRaises(AttributeError):	self.cls.test(1,2,3,"h")
 		with self.assertRaises(AttributeError): self.cls.test(val="a",_returns=float)
-		# with self.assertRaises(ValueError): self.cls.test(nam="a",_returns=float)
+		with self.assertRaises(ValueError): self.cls.test(nam="a",_returns=float)

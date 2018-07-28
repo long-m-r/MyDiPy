@@ -6,7 +6,7 @@ from collections import defaultdict as ddict
 from inspect import Signature, signature, isclass, isfunction, \
     _VAR_KEYWORD,_KEYWORD_ONLY,_VAR_POSITIONAL,_POSITIONAL_ONLY,_POSITIONAL_OR_KEYWORD,_empty
 
-class TypeCheckError(TypeError): pass
+class TypeCheckError(TypeError,NotImplementedError): pass
 
 # Define our decorators
 def no_type_check(obj):
@@ -110,8 +110,15 @@ def type_check(obj):
     elif isfunction(obj):
         # If there aren't any annotations, just return
         if not getattr(obj,'__annotations__',{}):
-            obj.__typed__=True #Technically is typed, just against nothing
-            return obj
+
+            @wraps(obj)
+            def filters(*args,**kwargs):
+                kwargs.pop("_returns",None)
+                return obj(*args,**kwargs)
+            filters.__typed__=True
+
+            return filters
+
         # Function will need a signature
         obj.__annotations__['_returns']=Type
         objsig=signature(obj)
@@ -123,6 +130,10 @@ def type_check(obj):
             returns = kwargs.pop("_returns", Any)
             # Check the arguments to parameters. Raises TypeCheckError if wrong
             _bind_check(objsig, args, kwargs.copy(), returns)
+
+            if getattr(obj,'__typed__',False):
+                kwargs['_returns']=returns
+
             # Eval if we make it here
             return obj(*args,**kwargs)
         wrapper.__typed__=True

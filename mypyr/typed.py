@@ -39,7 +39,7 @@ class _overload_dict(dict):
         # Create local dictionary to store our overloads
         self._overloads={}
         # Flag to see if only overloading `@overload` functions or all multiply defined functions
-        self._auto_overload=kwargs.pop('auto_overload',True)
+        self._auto_overload=kwargs.pop('auto_overload',False)
         self._mapped_overloads = ddict(lambda: self._auto_overload, kwargs.pop('auto_overload_dict',{}))
 
         # Initialize normally
@@ -61,6 +61,7 @@ class _overload_dict(dict):
 
                 # Leave without actually changing the value
                 return
+
             elif oflag and getattr(self[key],'__overload__',self._mapped_overloads[key]):
                 # We've got ourselves some brand new overloaded functions
 
