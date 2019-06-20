@@ -92,8 +92,3 @@ def inherit(*args,errors=TypeCheckError):
         return decorator
     else:
         raise TypeError("invalid usage of @inherit")
-
-
-
-
-

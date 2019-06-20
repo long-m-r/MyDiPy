@@ -3,7 +3,6 @@ from inspect import isfunction
 from functools import wraps
 from collections import defaultdict as ddict
 from typing import Iterable, Any, Type
-from infix import or_infix as infix
 
 def _merge_annotations(curr,new):
     """Private function. Don't use directly."""
@@ -89,53 +88,6 @@ class _overload_dict(dict):
         # Go ahead and set the item in the dictionary
         super().__setitem__(key,val)
 
-@infix
-def cast(cls: Type, obj):
-    """Attempt to cast an object to a desired type.
-    Format is identical to MyPy's cast function and should be compatible.
-
-    If the object is already of the correct class, it is passed through.
-
-    Args:
-        cls: Type to cast to
-        obj: An object to be cast
-
-    Returns:
-        The object cast to the target class
-    """
-    # If we are already done. Do nothing:
-    if cls is Any:
-        return obj
-    elif isinstance(obj,cls):
-        return obj
-
-    # If we have an object which looks castable:
-    if hasattr(obj,'__cast__'):
-        # If it is typed, we can specify the return type which is what we want
-        if getattr(obj.__cast__,'__typed__',False):
-            return obj.__cast__(cls,_returns=cls)
-        # If not, we'll just have to call it blindly and it can throw its own errors
-        else:
-            return obj.__cast__(cls)
-
-    # List of built-in conversion functions which can throw their own errors
-    classes = { # Class : Conversion function
-                str : str,
-                int : int
-            }
-
-    # TODO: Do we want to catch errors here and keep trying or just go for gold on the first hit? Same applies above to __cast__
-    for k,v in classes.items():
-        if issubclass(k,cls):
-            return v(obj)
-
-    # We've run out of things to try
-    raise NotImplementedError('cannot convert object {obj!r} to {typ!r}'.format(obj=str(obj),typ=str(cls)))
-
-@infix
-def to(obj, cls):
-    return cast(cls,obj)
-
 class TypedMeta(type):
     """A metaclass where multiply-defined functions are automatically overloaded"""
     def __prepare__(name, bases, **kwds):
@@ -148,6 +100,11 @@ class TypedMeta(type):
         return obj
 
 class TypedObject(metaclass=TypedMeta):
+    pass
+
+
+class OverloadedObject(metaclass=TypedMeta,auto_overload=True):
+    """An object allowing multiply defined functions to be overloaded"""
     def __setattr__(self, key, val):
         # if key in self.__annotations__ and not isinstance(val,self.__annotations__[key]):
         if not isinstance(val,self.__annotations__.get(key,object)):
@@ -163,24 +120,35 @@ class TypedObject(metaclass=TypedMeta):
     def __cast__(self, cls):
         raise NotImplementedError('cannot convert \'{inst!r}\' of type {obj!r} to {typ!r}'.format(inst=self.__class__.__qualname__,obj=str(type(self)),typ=str(cls)))
 
-# class OverloadableFunction:
-#     __typed__ = True
+class OverloadableFunction:
+    """A class allowing functions to be overloaded
 
-#     def __init__(self):
-#         self._funcs=[]
+    Use the format:
+        @OverloadableFunction
+        def test(a: str):
+            return 'String'
+        
+        @test.overload
+        def test(a: int):
+            return 'Integer'
+    """
+    __typed__ = True
 
-#     def __call__(self,*args,**kwargs):
-#         for f in self.funcs:
-#             try:
-#                 return f(*args,**kwargs)
-#             except TypeCheckError:
-#                 pass
-#         raise NotImplementedError("could not find valid @overload function for '"+funcs[0].__qualname__+"'")
+    def __init__(self,func):
+        self._funcs=[type_check(func)]
 
-#     def overload(self,func):
-#         self._funcs.append(type_check(func))
-#         _merge_annotations(self,func)
-#         return self
+    def __call__(self,*args,**kwargs):
+        for f in self.funcs:
+            try:
+                return f(*args,**kwargs)
+            except TypeCheckError:
+                pass
+        raise NotImplementedError("could not find valid @overload function for '"+funcs[0].__qualname__+"'")
+
+    def overload(self,func):
+        self._funcs.append(type_check(func))
+        _merge_annotations(self,func)
+        return self
 
 def overload(func):
     func.__overload__=True

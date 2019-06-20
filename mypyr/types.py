@@ -31,4 +31,3 @@ class _UnionMeta(ABCMeta):
 
     def __subclasscheck__(self,cls):
         return any(issubclass(a,cls) for a in self.__args__)
-
