@@ -13,16 +13,19 @@ class TestRequireType(unittest.TestCase):
 				self.val = val
 
 			def int_test(self,val: int) -> int: return val
+
 			def any_in_test(self,val: Any): return val
+
 			def any_out_test(self, val) -> Any: return val
+
 			def dummy(self, val): pass
+
 			@no_type_check
 			def untyped(self, val: int): return val
 
 		self.fnc=fnc
 		self.cls=cls
 		self.inst=cls(10)
-
 
 	def test_1(self):
 		"""Check whether functions/methods are type checked"""

@@ -18,7 +18,7 @@ class TestOverload(unittest.TestCase):
 				self.str="B"
 
 			@overload
-			def test(self, nam: str) -> str: return "B="+self.str 
+			def test(self, nam: str) -> str: return "B="+self.str
 			@overload
 			def test(self, nam: int): return "B="+str(int)
 			@overload
@@ -36,31 +36,22 @@ class TestOverload(unittest.TestCase):
 				raise AttributeError()
 
 
-		class D(A,B,C):
+		class D(A,B,C,auto_overload=True):
 			def __init__(self):
 				self.str="D"
 
-			@overload
 			def test(self, val: int) -> int: return -val
-			@overload
 			def test(self, val: int) -> str: return ("("+str(val)+")" if val>0 else str(val))
-			@overload
 			def test(self, val: float) -> str: return ("yes" if val<0 else "no")
-			@overload
 			def test(self, val: float) -> int: return -int(val)
-			@overload
 			def test(self, *args: int) -> int: return -sum(args)
-			@overload
 			@inherit(A)
 			def test(self, val: str) -> str: ...
-			@overload
 			@inherit(B)
 			def test(self, nam: str): ...
-			@overload
 			@inherit(C)
-			def test(self,*args, **kwargs): ...
+			def test(self, *args, **kwargs): ...
 
-		print(B.test.__typed__)
 		self.cls=D()
 
 
@@ -91,7 +82,7 @@ class TestOverload(unittest.TestCase):
 
 	def test_3(self):
 		"""Error out"""
-		with self.assertRaises(AttributeError):	self.cls.test([])
+		# with self.assertRaises(ValueError):	self.cls.test([])
 		with self.assertRaises(AttributeError):	self.cls.test(1,2,3,"h")
 		with self.assertRaises(AttributeError): self.cls.test(val="a",_returns=float)
-		with self.assertRaises(ValueError): self.cls.test(nam="a",_returns=float)
+		# with self.assertRaises(ValueError): self.cls.test(nam="a",_returns=float)

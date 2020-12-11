@@ -14,12 +14,17 @@ def _filter(func):
 
     return wraps(func)(wrapper)
 
-def inherit(*args,errors=TypeCheckError):
+def inherit(*args,errors=(NotImplementedError)):
     """A decorator which automatically wraps the underlying function and instead calls a parent class
+    The body of the wrapped function is entirely ignored.
+    Annotations of the parent class will be applied to the wrapped function **unless** they are otherwise
+    defined
+
+    These functions are mostly useless until you start working with the Typed
 
     Args:
         cls : The parent class to inherit the function implementation from
-        errors : An error or Tuple of errors which will, if encountered, will cause the search to skip that method and continue
+        errors : An error or Tuple of errors which will, if encountered, cause the search to skip that method and continue
 
     Example:
         A basic example of a class inheriting a method from a different class
@@ -31,23 +36,18 @@ def inherit(*args,errors=TypeCheckError):
         >>> class Child(Parent):
         ...     @inherit
         ...     def test(self,value): ...
-
-        Calling the 'test' method  from 'Child' results in:
-
         >>> obj = Child()
         >>> obj.test("Child")
         Child>Parent
 
         It is also possible to write Child as:
-
         ... class Child:
         ...     @inherit(Parent)
         ...     def test(self,value): ...
 
         Which is functionally identical for the method `test` while no other methods from `Parent` would be inherited.
-
-        Note that the child class does NOT need to inherit from the parent class; however, it is generally recommended
-
+        This is generally not recommended, but if your class inherits from multiple classes it may be useful to specify
+        which one to inherit from.
     Raises:
         TypeError: If `cls` is not a class
         NotImplementedError: When the `@inherit` decorated function is called and no method can be found
@@ -64,6 +64,7 @@ def inherit(*args,errors=TypeCheckError):
         if len(bases)==0:
             # We don't have any bases, extract from the object
             bases.extend(args[0].__class__.__bases__)
+            # funcs.extend([getattr(b,wrapped[0].__name__) for b in bases if hasattr(b,wrapped[0].__name__)])
 
         if len(funcs)==0:
             # Extract functions from the bases
@@ -74,14 +75,13 @@ def inherit(*args,errors=TypeCheckError):
                 return f(*args,**kwargs)
             except errors:
                 pass
-        raise NotImplementedError("could not find valid @inherit method for "+wrapped[0].__qualname__)
+        raise TypeCheckError("could not find valid @inherit method for "+wrapped[0].__qualname__)
 
     # Create a decorator for the function
     def decorator(func: Function):
         res = wraps(func)(wrapper)
-        res.__typed__=True
         wrapped.append(func)
-        return res
+        return type_check(res)
 
     if len(args)==1 and isfunction(args[0]):
         # If it's being called to decorate a function

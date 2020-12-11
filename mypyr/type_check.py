@@ -8,7 +8,102 @@ from inspect import Signature, signature, isclass, isfunction, \
 
 class TypeCheckError(TypeError,NotImplementedError): pass
 
-# Define our decorators
+def type_check(obj):
+    """
+    A decorator which wraps a function or class to enforce type checking.
+    Type checking is matched against typing annotations in Python 3 as defined by
+    `PEP 484 <https://www.python.org/dev/peps/pep-0484/>`_. No other annotations are
+    allowed with `@type_check` (but seriously, does anyone use them for anything else?).
+
+    The decorated function/class must have typing annotations when decorated or it will
+    be returned unwrapped.
+
+    When used to decorate a class, all annotated methods will be type checked unless decorated
+    with `@no_type_check`.
+
+    Examples:
+        An example on applying to a specific function (or class method)
+
+        >>> @type_check
+        >>> def typed_function(a: int) -> int:
+        ...     return a
+        ...
+        >>> typed_function(1)
+        1
+        >>> typed_function("string")
+        TypeCheckError: type mismatch for argument 'a'. Got <class 'str'>, needed "<class 'int'>"
+
+    Raises:
+        TypeCheckError: If there is a mismatch between a typed parameter and a passed argument when the function is called
+        TypeCheckError: If, when the function is called with a named `_returns` argument, that argument is not a subclass
+        of the function's annotated return type. Note that the type of the actual return value is NOT checked.
+
+    Note:
+        Functions/methods decorated with `@type_check` accept an optional named argument `_returns`
+        which can be used to specify the return type. Note that only the
+        annotation of the return value is checked, the return value is not checked
+        at runtime (we trust the implementation will return what was promised).
+        As such, it is best practice to specify a single and specific return type for a function
+        instead of a more general or `Union` type. Use `@overload` to define multiple methods with
+        single return types whenever possible.
+
+        Functions/methods used with `@type_check` should not have any parameters named `_returns`.
+    """
+
+    # We've already defined this object's typing
+    if hasattr(obj,'__typed__'):
+        return obj
+
+    # If it's a function
+    elif isfunction(obj):
+        # If there aren't any annotations, just return
+        if not getattr(obj,'__annotations__',{}):
+            @wraps(obj)
+            def filters(*args,**kwargs):
+                kwargs.pop("_returns",None)
+                try:
+                    return obj(*args,**kwargs)
+                except TypeError:
+                    raise TypeCheckError ('Invalid types for calling function')
+            filters.__typed__=True
+
+            return filters
+
+        # Function will need a signature
+        obj.__annotations__['_returns']=Type
+        objsig=signature(obj)
+
+        # Create the wrapper function which includes the `_returns` argument
+        @wraps(obj)
+        def wrapper(*args,**kwargs):
+            # See if we're demanding a return type
+            returns = kwargs.pop("_returns", Any)
+            # Check the arguments to parameters. Raises TypeCheckError if wrong
+            _bind_check(objsig, args, kwargs.copy(), returns)
+
+            if getattr(obj,'__typed__',False):
+                kwargs['_returns']=returns
+
+            # Eval if we make it here
+            return obj(*args,**kwargs)
+        wrapper.__typed__=True
+
+        # Return the wrapped function
+        return wrapper
+
+    elif isclass(obj):
+        # Need to iterate through each method in the class
+        for k,v in obj.__dict__.items():
+            try:
+                setattr(obj,k,type_check(v))
+            except TypeError:
+                pass
+        # Mark class as typed and return
+        obj.__typed__=True
+        return obj
+    else:
+        raise TypeError('@type_check can only be applied to functions or classes')
+
 def no_type_check(obj):
     """
     A decorator which explicitly marks a class or method to NOT be type checked.
@@ -60,105 +155,15 @@ def no_type_check(obj):
     setattr(obj,'__typed__',getattr(obj,'__typed__',False))
     return obj
 
-def type_check(obj):
-    """
-    A decorator which wraps a function or class to enforce type checking.
-    Type checking is matched against typing annotations in Python 3 as defined by
-    `PEP 484 <https://www.python.org/dev/peps/pep-0484/>`_. No other annotations are
-    allowed with `@type_check` (but seriously, does anyone use them for anything else?).
-
-    The decorated function/class must have typing annotations when decorated or it will
-    be returned unwrapped.
-
-    When used to decorate a class, all annotated methods will be type checked unless decorated
-    with `@no_type_check`.
-
-    Examples:
-        An example on applying to a specific function (or class method)
-
-        >>> @type_check
-        >>> def typed_function(a: int) -> int:
-        ...     return a
-        ...
-        >>> typed_function(1)
-        1
-        >>> typed_function("string")
-        TypeCheckError: type mismatch for argument 'a'. Got <class 'str'>, needed "<class 'int'>"
-
-    Raises:
-        TypeCheckError: If there is a mismatch between a typed parameter and a passed argument when the function is called
-        TypeCheckError: If, when the function is called with a named `_returns` argument, that argument is not a subclass
-        of the function's annotated return type. Note that the type of the actual return value is NOT checked.
-
-    Note:
-        Functions/methods decorated with `@type_check` accept an optional named argument `_returns`
-        which can be used to specify the return type. Note that only the
-        annotation of the return value is checked, the return value is not checked
-        at runtime (we trust the implementation will return what was promised).
-        As such, it is best practice to specify a single and specific return type for a function
-        instead of a more general or `Union` type. Use `@overload` to define multiple methods with
-        single return types whenever possible.
-
-        Functions/methods used with `@type_check` should not have any parameters named `_returns`.
-    """
-
-    # We've already defined this object's typing
-    if hasattr(obj,'__typed__'):
-        return obj
-
-    # If it's a function
-    elif isfunction(obj):
-        # If there aren't any annotations, just return
-        if not getattr(obj,'__annotations__',{}):
-
-            @wraps(obj)
-            def filters(*args,**kwargs):
-                kwargs.pop("_returns",None)
-                return obj(*args,**kwargs)
-            filters.__typed__=True
-
-            return filters
-
-        # Function will need a signature
-        obj.__annotations__['_returns']=Type
-        objsig=signature(obj)
-
-        # Create the wrapper function
-        @wraps(obj)
-        def wrapper(*args,**kwargs):
-            # See if we're demanding a return type
-            returns = kwargs.pop("_returns", Any)
-            # Check the arguments to parameters. Raises TypeCheckError if wrong
-            _bind_check(objsig, args, kwargs.copy(), returns)
-
-            if getattr(obj,'__typed__',False):
-                kwargs['_returns']=returns
-
-            # Eval if we make it here
-            return obj(*args,**kwargs)
-        wrapper.__typed__=True
-
-        # Return the wrapped function
-        return wrapper
-
-    elif isclass(obj):
-        # Need to iterate through each method in the class
-        for k,v in obj.__dict__.items():
-            try:
-                setattr(obj,k,type_check(v))
-            except TypeError:
-                pass
-        # Mark class as typed and return
-        obj.__typed__=True
-        return obj
-    else:
-        raise TypeError('@type_check can only be applied to functions or classes')
 
 def _bind_check(sig, args, kwargs, return_type = Any) -> None:
-    """Private method. Don't use directly."""
-    # Modified from inspect.Signature._bind to streamline performance and enforce type checking
-    # Raises:
-    #   TypeCheckError: If the args/kwargs cannot be successfully mapped to the function signature sig
+    """
+    Private method. Don't use directly.
+    Modified from inspect.Signature._bind to streamline performance and enforce type checking
+    Raises:
+       TypeCheckError: If the args/kwargs cannot be successfully mapped to the function signature sig
+    """
+    #print(sig,args,kwargs,return_type)
     if return_type is Any:
         pass
     elif sig.return_annotation is _empty:

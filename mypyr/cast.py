@@ -24,7 +24,7 @@ def cast(cls: Type, obj):
     if cls is Any or isinstance(obj,cls):
         return obj
 
-    # If we have an object which looks castable:
+    # If we have an object which looks castable (intentionally not catching errors here as they may be desired)
     if hasattr(obj,'__cast__'):
         # If it is typed, we can specify the return type which is what we want
         if getattr(obj.__cast__,'__typed__',False):
@@ -44,7 +44,7 @@ def cast(cls: Type, obj):
             pass
 
     # If the class we have is castable, it may accept the object in its __init__ (especially if it's typed/overloaded)
-    # This is a bit risky, but we're assuming we're only casting to well-behaving objects
+    # This is a bit risky, but we're assuming we're only casting to well-behaving objects (this helps for str/int/etc basic types)
     try:
         return cls(obj)
     except:
@@ -53,10 +53,11 @@ def cast(cls: Type, obj):
     # We've run out of things to try
     raise NotImplementedError('cannot convert object {obj!r} to {typ!r}'.format(obj=str(obj),typ=str(cls)))
 
-# Use the infix package to allow this to be used lie
+# Use the infix package to allow this to be used in a cool way (if not necessarily a wise one)
 @make_infix('sub','rshift')
 def to(obj, cls):
-    """Attempt to cast an object to a desired type.
+    """
+    Attempt to cast an object to a desired type.
     The mirror-image of cast. Cast an object to type
 
     Infixed for the format '-to>>' making the following equivalent
@@ -64,6 +65,7 @@ def to(obj, cls):
         (5.1 -to>> str) == '5.1'
     Be careful with the latter format as -to>> uses subtraction and bitwise shift operators
     which are in the middle of operator precedence and lower than things like multiplication!
+    If using please use parentheses for each cast.
 
     Args:
         obj: An object to be cast

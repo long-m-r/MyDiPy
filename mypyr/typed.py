@@ -5,7 +5,12 @@ from collections import defaultdict as ddict
 from typing import Iterable, Any, Type
 
 def _merge_annotations(curr,new):
-    """Private function. Don't use directly."""
+    """Private function. Don't use directly.
+
+    This function will modify the annotations
+    and docstring of `curr` to incorporate those
+    in `new`
+    """
     # Merge annotations by items in new
     for k,v in new.__annotations__.items():
         # Get a set of the annotations
@@ -27,12 +32,13 @@ def _merge_annotations(curr,new):
             curr.__doc__ += "\n\n"+new.__doc__
 
 class _overload_dict(dict):
-    """Private class. Don't use directly."""
-    # Used in `OverloadableMeta.__prepare__(...)`
-    #
-    # Creates a dictionary which will automatically create an overloaded
-    # function when `@overload` decorated functions or auto_overload=True
-    # are overwritten (added to the dictionary 2+ times)
+    """Private class. Don't use directly.
+    Used in `OverloadableMeta.__prepare__(...)`
+
+    Creates a dictionary which will automatically create an overloaded
+    function when `@overload` decorated functions or auto_overload=True
+    are overwritten (added to the dictionary 2+ times)
+    """
 
     def __init__(self,*args,**kwargs):
         # Create local dictionary to store our overloads
@@ -71,7 +77,9 @@ class _overload_dict(dict):
                 # Wrapper method which tries them in series
                 @wraps(self[key])
                 def wrapper(*args,**kwargs):
+                    # funcs is a pointer so as we append it'll pick up the later ones
                     for f in funcs:
+                        # Check if this function annotations match
                         try:
                             return f(*args,**kwargs)
                         except TypeCheckError:
@@ -89,13 +97,19 @@ class _overload_dict(dict):
         super().__setitem__(key,val)
 
 class TypedMeta(type):
-    """A metaclass where multiply-defined functions are automatically overloaded"""
+    """
+    A metaclass where multiply-defined functions may be overloaded
+    and can be executed with multiple dispatch
+
+    Generally one should inherit from the TypedObject or MDObject
+    """
     def __prepare__(name, bases, **kwds):
         # Dictionary that handles @overload methods intelligently
         return _overload_dict(bases=bases, **kwds)
 
     def __new__(metacls, name, bases, namespace, **kwds):
         obj = type.__new__(metacls, name, bases, namespace)
+        # Create empty annotations if they don't exist
         setattr(obj, '__annotations__', getattr(obj, '__annotations__', {}))
         return obj
 
@@ -103,31 +117,40 @@ class TypedObject(metaclass=TypedMeta):
     pass
 
 
-class OverloadedObject(metaclass=TypedMeta,auto_overload=True):
+class OverloadObject(metaclass=TypedMeta,auto_overload=True):
     """An object allowing multiply defined functions to be overloaded"""
+
     def __setattr__(self, key, val):
         # if key in self.__annotations__ and not isinstance(val,self.__annotations__[key]):
         if not isinstance(val,self.__annotations__.get(key,object)):
-            raise TypeError('cannot assign {val!r} to {key!r} which is of {typ!r}'.format(val=str(type(val)),typ=str(self.__annotations__.get(key,object)),key=self.__class__.__qualname__+'.'+key))
+            raise TypeError('cannot assign {val!r} to {key!r} which is of {typ!r}'.format(
+                val=str(type(val)),
+                typ=str(self.__annotations__.get(key,object)),
+                key=self.__class__.__qualname__+'.'+key)
+            )
         super().__setattr__(key,val)
 
-    def __cast__(self, cls) -> str:
+    def __cast__(self) -> str:
+        """Cast function to str"""
         return self.__str__()
-    def __cast__(self, cls) -> int:
+    def __cast__(self) -> int:
+        """Cast function to int"""
         return self.__int__()
-    def __cast__(self, cls) -> bool:
+    def __cast__(self) -> bool:
+        """Cast function to bool"""
         return self.__nonzero__()
-    def __cast__(self, cls):
+    def __cast__(self):
+        """Cast function to throw an error for all other types"""
         raise NotImplementedError('cannot convert \'{inst!r}\' of type {obj!r} to {typ!r}'.format(inst=self.__class__.__qualname__,obj=str(type(self)),typ=str(cls)))
 
-class OverloadableFunction:
+class OverloadFunction:
     """A class allowing functions to be overloaded
 
     Use the format:
         @OverloadableFunction
         def test(a: str):
             return 'String'
-        
+
         @test.overload
         def test(a: int):
             return 'Integer'
