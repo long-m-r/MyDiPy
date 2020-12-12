@@ -61,7 +61,7 @@ B=test
 
 And here's an example that shows how casting can work in practice:
 ``` python
->>> from MyDiPy import OverloadObject, cast, to, inherit
+>>> from mydipy import OverloadObject, cast, to, inherit
 >>>
 >>> class Currency(OverloadObject):
 ...     """Generic parent Currency Class"""

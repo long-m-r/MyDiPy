@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'MyPyR'
+project = 'MyDiPy'
 copyright = '2018, Matthew Long'
 author = 'Matthew Long'
 
