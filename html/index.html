@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyPyR’s documentation &#8212; MyPyR 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="mypyr-s-documentation">
+<h1>MyPyR’s documentation<a class="headerlink" href="#mypyr-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>A package implementing runtime type-checking and multiple-dispatch method overloading for Python 3+
+relying upon <a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484</a> annotation.</p>
+<dl class="simple">
+<dt>This functionality is built around the <cite>OverloadObject</cite> class which provides:</dt><dd><ul class="simple">
+<li><p>Automatic or manual (with the <cite>&#64;overload</cite> decorator) overloading of methods</p></li>
+<li><p>The <cite>&#64;inherit</cite> decorator for specifying specific method inheritance (allowing specific overloads to be inherited)</p></li>
+<li><p>A framework for type-casting of objects</p></li>
+</ul>
+</dd>
+</dl>
+<p>In combination, these tools provide a framework for taking advantage of the conveniences
+of typed languages when desired while still allowing for the inherent flexibility of Python’s duck-typed system.</p>
+<p>The system was designed to minimize runtime performance by pre-calculating function
+<a class="reference external" href="https://docs.python.org/3/library/inspect.html#inspect.signature">signatures</a> when first defined and utilizing a custom binding function to identify whether the arguments match the type annotations. This is true multiple-dispatch generic functions as opposed to the builtin <a class="reference external" href="https://docs.python.org/3/library/functools.html#functools.singledispatch">&#64;functools.singledispatch</a>.</p>
+<p>Notes:
+* Dispatch is greedy, in that it will execute the first function which can be succesfully bound to the arguments. It also considers un-typed arguments to be equivalent to <cite>Any</cite>, making it match any argument.
+* This was developed as a proof-of-concept over a couple of weekends for fun. It has been tested on Python 3.6.9 and should generally work for Python 3.</p>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>At a high-level, MyPyR lets you seamlessly implement type checking, method overloading, inheritance, and multiple dispatch all by inheriting from an instance of <cite>OverloadObject</cite> (or the <cite>TypedMeta</cite> MetaClass).</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span> <span class="kn">from</span> <span class="nn">mypyr</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">inherit</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create an overloadable parent class</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">val</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s2">&quot;VALUE: -&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># In this class we set `auto_overload=False` so you need the @overload decorator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">B</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">,</span> <span class="n">auto_overload</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nd">@overload</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s2">&quot;B=&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">str</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="nd">@overload</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s2">&quot;B=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="nd">@overload</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Now let&#39;s inherit from A and B and see what happens</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">C</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">auto_overload</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="o">-</span><span class="n">val</span><span class="o">*</span><span class="mi">5</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="c1"># Here we want to go to Class A for any calls where val is an int and we want a str returned</span>
+<span class="gp">... </span>    <span class="nd">@inherit</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="c1"># Similarly we want to go to Class B for anything where val is a str</span>
+<span class="gp">... </span>    <span class="nd">@inherit</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="o">...</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">C</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="go">-5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">_returns</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+<span class="go">VALUE: -1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">))</span>
+<span class="go">B=test</span>
+</pre></div>
+</td></tr></table></div>
+<p>Furthermore, there is a basic casting system built into MyPyR (this is in the early stages):</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mypyr</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="n">inherit</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Currency</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="sd">&quot;&quot;&quot;Generic parent Currency Class&quot;&quot;&quot;</span>
+<span class="gp">... </span>    <span class="n">exchange_ratio</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="gp">... </span>    <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="c1"># Value of our currency</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="c1"># Pretty form</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Dollar</span><span class="p">(</span><span class="n">Currency</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="sd">&quot;&quot;&quot;Dollar currency. Use this as the basis for all exchanges&quot;&quot;&quot;</span>
+<span class="gp">... </span>    <span class="n">exchange_ratio</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="gp">... </span>    <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="c1"># Let&#39;s convert this currency back into dollars so we can do exchanges</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__cast__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Currency</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">Dollar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_ratio</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># This will mean we will automatically use __str__, __int__, and __nonzero__ to convert to str, int, and bool respectively</span>
+<span class="gp">... </span>    <span class="nd">@inherit</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__cast__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oth</span> <span class="p">:</span> <span class="n">Currency</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Currency</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="c1"># Convert both to Dollars to do addition</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">oth</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Dollar</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="n">oth</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dollar</span><span class="p">,</span><span class="n">oth</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Dollar</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="n">me</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dollar</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">else</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="n">me</span> <span class="o">=</span> <span class="bp">self</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">Dollar</span><span class="p">(</span><span class="n">me</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">oth</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Euro</span><span class="p">(</span><span class="n">Dollar</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">exchange_ratio</span> <span class="o">=</span> <span class="mf">1.21</span>
+<span class="gp">... </span>    <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;€&#39;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Define some amount of dollars and euros</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Dollar</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Euro</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># The next two are equivalent!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Dollar</span><span class="p">,</span><span class="n">b</span><span class="p">))</span>
+<span class="go">$3.63</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span><span class="n">to</span><span class="o">&gt;&gt;</span> <span class="n">Dollar</span><span class="p">)</span>
+<span class="go">$3.63</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Automatically unit convert for addition</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">)</span>
+<span class="go">$18.15</span>
+</pre></div>
+</td></tr></table></div>
+<p>To enable casting, simply define <cite>__cast__(self) -&gt; &lt;Output Type&gt;</cite> magic methods to your classes.
+Optionally, you may want to <cite>&#64;inherit(OverloadObject)</cite> for <cite>__cast__(self)</cite> at the end in order to
+get automatic casting to str, int, and bool via the normal Python magic methods.</p>
+</div>
+<div class="section" id="known-issues-feature-requests">
+<h2>Known Issues/Feature Requests<a class="headerlink" href="#known-issues-feature-requests" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Proper handling of arrays and types</p></li>
+<li><p>Proper handling of *args and **kwargs</p></li>
+<li><p>Automatic type casting of objects in method parameters when no other definition matches</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+<span class="target" id="module-mypyr"></span><dl class="py class">
+<dt id="mypyr.OverloadFunction">
+<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">OverloadFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.OverloadFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator class allowing functions to be overloaded.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@OverloadFunction</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="s1">&#39;String&#39;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@test</span><span class="o">.</span><span class="n">overload</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="s1">&#39;Integer&#39;</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="mypyr.OverloadFunction.overload">
+<code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.OverloadFunction.overload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add another overload definition to the current function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>func</strong> – A function to append to the overload list</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The combined function with multiple dispatch</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="mypyr.OverloadObject">
+<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">OverloadObject</code><a class="headerlink" href="#mypyr.OverloadObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object allowing multiply defined functions to be overloaded</p>
+<p>You should generally inherit from this object if you want to have overloading
+and multiple dispatch, as well as support for targeted inheritance and casting
+as provided by other parts of this module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>auto_overload</strong> – whether to automatically overload (true) or only when the <cite>&#64;overload</cite> decorator is used. Default True</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s2">&quot;Value=&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">str</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="o">-</span><span class="n">val</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">A</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="go">-1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">_returns</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+<span class="gr">ValueError</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">))</span>
+<span class="go">Value=test</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="mypyr.TypeCheckError">
+<em class="property">exception </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">TypeCheckError</code><a class="headerlink" href="#mypyr.TypeCheckError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="mypyr.TypedMeta">
+<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">TypedMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.TypedMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>A metaclass where function my be overloaded and executed with multiple dispatch.</p>
+<p>Generally one should inherit from OverloadObject unless there is a specific
+reason for not doing so (e.g., not having casting functionality)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>auto_overload</strong> – When inheriting from this metaclass, the</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Example</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypedMeta</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s1">&#39;int&#39;</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s1">&#39;str&#39;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">Example</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">a</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">))</span>
+<span class="go">str</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="go">int</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="mypyr.cast">
+<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">cast</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.cast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cast an object to a desired type via the <cite>__cast__</cite> magic method.</p>
+<p>The format of <cite>cast</cite> is identical to MyPy’s cast function and should be compatible.
+If the object is already of the correct class, it is passed through.</p>
+<p>There is a mirror-image function <cite>to</cite> which also casts. It has an infix for <cite>-to&gt;&gt;</cite></p>
+<dl class="simple">
+<dt>Therefore, all three of these formats are identical:</dt><dd><p><cite>cast(str,5.1) == to(5.1,str) == (5.1 -to&gt;&gt; str) == ‘5.1’</cite></p>
+</dd>
+</dl>
+<p>While the <cite>-to&gt;&gt;</cite> format is easy to read, be careful as subtraction and bitshift operators
+are in the middle of operator precedence. If using the infix, always use parentheses!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>) – Type to cast to</p></li>
+<li><p><strong>obj</strong> – An object to be cast</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The object cast to the target class</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If the class cannot be converted automatically</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">OverloadObject</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="mypyr.inherit">
+<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">inherit</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">errors=&lt;class 'NotImplementedError'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.inherit" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which automatically wraps the underlying function and instead calls a parent class
+The body of the wrapped function is entirely ignored.
+Annotations of the parent class will be applied to the wrapped function <strong>unless</strong> they are otherwise
+defined</p>
+<p>These functions are mostly useless until you start working with the Typed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> – The parent class to inherit the function implementation from</p></li>
+<li><p><strong>errors</strong> – An error or Tuple of errors which will, if encountered, cause the search to skip that method and continue</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>A basic example of a class inheriting a method from a different class</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Parent</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">value</span> <span class="o">+</span> <span class="s2">&quot;&gt;Parent&quot;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Parent</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nd">@inherit</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">):</span> <span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span> <span class="o">=</span> <span class="n">Child</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="s2">&quot;Child&quot;</span><span class="p">)</span>
+<span class="go">Child&gt;Parent</span>
+</pre></div>
+</div>
+<p>It is also possible to write Child as:
+&gt;&gt;&gt; class Child:
+…     &#64;inherit(Parent)
+…     def test(self,value): …</p>
+<p>Which is functionally identical for the method <cite>test</cite> while no other methods from <cite>Parent</cite> would be inherited.
+This is generally not recommended, but if your class inherits from multiple classes it may be useful to specify
+which one to inherit from.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TypeError</strong> – If <cite>cls</cite> is not a class</p></li>
+<li><p><strong>NotImplementedError</strong> – When the <cite>&#64;inherit</cite> decorated function is called and no method can be found</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<p>Handle annotations</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="mypyr.no_type_check">
+<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">no_type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.no_type_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which explicitly marks a class or method to NOT be type checked.</p>
+<p>When used to decorate a class, all annotated methods will not be type checked unless decorated
+with <cite>&#64;type_check</cite>. Note that this is the default behavior, but allows for consistency with
+<a class="reference external" href="https://docs.python.org/3.6/library/typing.html#typing.no_type_check">&#64;typing.no_type_check</a>.</p>
+<p>When used on methods inside a <cite>&#64;type_check</cite> class, <cite>&#64;no_type_check</cite> decorated methods will NOT
+be type checked.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The innermost application of <cite>&#64;type_check</cite> or <cite>&#64;no_type_check</cite> will persist. Therefore, given:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@type_check</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">c</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>  <span class="k">def</span> <span class="nf">f1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span>  <span class="nd">@no_type_check</span>
+<span class="gp">&gt;&gt;&gt; </span>  <span class="k">def</span> <span class="nf">f2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>method <cite>f1</cite> will be type checked while method <cite>f2</cite> will not be type checked.
+This behavior means that given:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@type_check</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@no_type_check</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><cite>f3</cite> will not be type checked. This is the intended behavior.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="mypyr.overload">
+<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.overload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overload decorator for class methods where auto_overload=False.</p>
+<p>If using this, use &#64;overload for every entry for any methods which are multiply
+defined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>func</strong> – A function to make overloadable (or to append to an existing overload)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The same function with type checking and overloading enabled</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>The following two classes are functionaliy identical and
+highlights the usage of this decorator:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">ExampleAutoOverload</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypedMeta</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="k">return</span> <span class="s1">&#39;int&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="k">return</span> <span class="s1">&#39;str&#39;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">ExampleWithDecorator</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypedMeta</span><span class="p">,</span><span class="n">auto_overload</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nd">@overload</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="k">return</span> <span class="s1">&#39;int&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nd">@overload</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span> <span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="k">return</span> <span class="s1">&#39;str&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="mypyr.type_check">
+<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.type_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which wraps a function or class to enforce type checking.
+Type checking is matched against typing annotations in Python 3 as defined by
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484</a>. No other annotations are
+allowed with <cite>&#64;type_check</cite> (but seriously, does anyone use them for anything else?).</p>
+<p>The decorated function/class must have typing annotations when decorated or it will
+be returned unwrapped.</p>
+<p>When used to decorate a class, all annotated methods will be type checked unless decorated
+with <cite>&#64;no_type_check</cite>.</p>
+<p class="rubric">Examples</p>
+<p>An example on applying to a specific function (or class method)</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@type_check</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">typed_function</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">a</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">typed_function</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">typed_function</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span>
+<span class="go">TypeCheckError: type mismatch for argument &#39;a&#39;. Got &lt;class &#39;str&#39;&gt;, needed &quot;&lt;class &#39;int&#39;&gt;&quot;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#mypyr.TypeCheckError" title="mypyr.TypeCheckError"><strong>TypeCheckError</strong></a> – If there is a mismatch between a typed parameter and a passed argument when the function is called</p></li>
+<li><p><a class="reference internal" href="#mypyr.TypeCheckError" title="mypyr.TypeCheckError"><strong>TypeCheckError</strong></a> – If, when the function is called with a named <cite>_returns</cite> argument, that argument is not a subclass of the function’s annotated return type. Note that the type of the actual return value is NOT checked.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Functions/methods decorated with <cite>&#64;type_check</cite> accept an optional named argument <cite>_returns</cite>
+which can be used to specify the return type. Note that only the
+annotation of the return value is checked, the return value is not checked
+at runtime (we trust the implementation will return what was promised).
+As such, it is best practice to specify a single and specific return type for a function
+instead of a more general or <cite>Union</cite> type. Use <cite>&#64;overload</cite> to define multiple methods with
+single return types whenever possible.</p>
+<p>Functions/methods used with <cite>&#64;type_check</cite> should not have any parameters named <cite>_returns</cite>.</p>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">MyPyR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matthew Long.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -35,8 +35,7 @@ def type_check(obj):
 
     Raises:
         TypeCheckError: If there is a mismatch between a typed parameter and a passed argument when the function is called
-        TypeCheckError: If, when the function is called with a named `_returns` argument, that argument is not a subclass
-        of the function's annotated return type. Note that the type of the actual return value is NOT checked.
+        TypeCheckError: If, when the function is called with a named `_returns` argument, that argument is not a subclass of the function's annotated return type. Note that the type of the actual return value is NOT checked.
 
     Note:
         Functions/methods decorated with `@type_check` accept an optional named argument `_returns`
@@ -81,7 +80,7 @@ def type_check(obj):
             # Check the arguments to parameters. Raises TypeCheckError if wrong
             _bind_check(objsig, args, kwargs.copy(), returns)
 
-            if getattr(obj,'__typed__',False):
+            if getattr(obj,'__typed__',False) or getattr(obj,'__inherit__',False):
                 kwargs['_returns']=returns
 
             # Eval if we make it here

@@ -5,7 +5,8 @@ from collections import defaultdict as ddict
 from typing import Iterable, Any, Type
 
 def _merge_annotations(curr,new):
-    """Private function. Don't use directly.
+    """
+    Private function. Don't use directly.
 
     This function will modify the annotations
     and docstring of `curr` to incorporate those
@@ -32,7 +33,9 @@ def _merge_annotations(curr,new):
             curr.__doc__ += "\n\n"+new.__doc__
 
 class _overload_dict(dict):
-    """Private class. Don't use directly.
+    """
+    Private class. Don't use directly.
+
     Used in `OverloadableMeta.__prepare__(...)`
 
     Creates a dictionary which will automatically create an overloaded
@@ -44,7 +47,7 @@ class _overload_dict(dict):
         # Create local dictionary to store our overloads
         self._overloads={}
         # Flag to see if only overloading `@overload` functions or all multiply defined functions
-        self._auto_overload=kwargs.pop('auto_overload',False)
+        self._auto_overload=kwargs.pop('auto_overload',True)
         self._mapped_overloads = ddict(lambda: self._auto_overload, kwargs.pop('auto_overload_dict',{}))
 
         # Initialize normally
@@ -98,10 +101,27 @@ class _overload_dict(dict):
 
 class TypedMeta(type):
     """
-    A metaclass where multiply-defined functions may be overloaded
-    and can be executed with multiple dispatch
+    A metaclass where function my be overloaded and executed with multiple dispatch.
 
-    Generally one should inherit from the TypedObject or MDObject
+    Generally one should inherit from OverloadObject unless there is a specific
+    reason for not doing so (e.g., not having casting functionality)
+
+    Args:
+        auto_overload:
+            When inheriting from this metaclass, the
+
+    Example:
+        >>> class Example(metaclass=TypedMeta):
+        ...     def a(self, val : int) -> str:
+        ...         return 'int'
+        ...     def a(self, val : str) -> str:
+        ...         return 'str'
+        ...
+        >>> ex = Example()
+        >>> print(ex.a('test'))
+        str
+        >>> print(ex.a(1))
+        int
     """
     def __prepare__(name, bases, **kwds):
         # Dictionary that handles @overload methods intelligently
@@ -113,12 +133,42 @@ class TypedMeta(type):
         setattr(obj, '__annotations__', getattr(obj, '__annotations__', {}))
         return obj
 
-class TypedObject(metaclass=TypedMeta):
-    pass
+# class TypedObject(metaclass=TypedMeta):
+#     pass
+
+class OverloadObject(metaclass=TypedMeta):
+    """
+    An object allowing multiply defined functions to be overloaded
 
 
-class OverloadObject(metaclass=TypedMeta,auto_overload=True):
-    """An object allowing multiply defined functions to be overloaded"""
+    You should generally inherit from this object if you want to have overloading
+    and multiple dispatch, as well as support for targeted inheritance and casting
+    as provided by other parts of this module.
+
+    Args:
+        auto_overload : whether to automatically overload (true) or only when the `@overload` decorator is used. Default True
+
+    Example:
+        >>> class A(OverloadObject):
+        ...     def test(self, val: str) -> str:
+        ...         return "Value="+self.str
+        ...
+        ...     def test(self, val: int) -> int:
+        ...         return -val
+        ...
+        ...     def test(self, val):
+        ...         raise ValueError()
+        ...
+        >>> ex = A()
+        >>> print(ex.test(1))
+        -1
+        >>> print(ex.test(1,_returns=str))
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ValueError
+        >>> print(ex.test('test'))
+        Value=test
+    """
 
     def __setattr__(self, key, val):
         # if key in self.__annotations__ and not isinstance(val,self.__annotations__[key]):
@@ -144,20 +194,29 @@ class OverloadObject(metaclass=TypedMeta,auto_overload=True):
         raise NotImplementedError('cannot convert \'{inst!r}\' of type {obj!r} to {typ!r}'.format(inst=self.__class__.__qualname__,obj=str(type(self)),typ=str(cls)))
 
 class OverloadFunction:
-    """A class allowing functions to be overloaded
+    """
+    A decorator class allowing functions to be overloaded.
 
-    Use the format:
-        @OverloadableFunction
-        def test(a: str):
-            return 'String'
-
-        @test.overload
-        def test(a: int):
-            return 'Integer'
+    Example:
+        >>> @OverloadFunction
+        ... def test(a: str):
+        ...     return 'String'
+        ...
+        >>> @test.overload
+        ... def test(a: int):
+        ...     return 'Integer'
     """
     __typed__ = True
 
     def __init__(self,func):
+        """
+        Use the constructor as a decorator (@OverloadableFunction)
+
+        Args:
+            func : A function to allow to be overloaded
+        Returns:
+            OverloadFunction instance which behaves like a function
+        """
         self._funcs=[type_check(func)]
 
     def __call__(self,*args,**kwargs):
@@ -169,10 +228,48 @@ class OverloadFunction:
         raise NotImplementedError("could not find valid @overload function for '"+funcs[0].__qualname__+"'")
 
     def overload(self,func):
+        """
+        Add another overload definition to the current function
+
+        Args:
+            func : A function to append to the overload list
+        Returns:
+            The combined function with multiple dispatch
+        """
         self._funcs.append(type_check(func))
         _merge_annotations(self,func)
         return self
 
 def overload(func):
-    func.__overload__=True
+    """
+    Overload decorator for class methods where auto_overload=False.
+
+    If using this, use @overload for every entry for any methods which are multiply
+    defined.
+
+    Args:
+        func : A function to make overloadable (or to append to an existing overload)
+    Returns:
+        The same function with type checking and overloading enabled
+    Example:
+        The following two classes are functionaliy identical and
+        highlights the usage of this decorator:
+
+        >>> class ExampleAutoOverload(metaclass=TypedMeta):
+        >>>     def a(self, val : int) -> str:
+        >>>         return 'int'
+        >>>     def a(self, val : str) -> str:
+        >>>         return 'str'
+        >>>
+        >>> class ExampleWithDecorator(metaclass=TypedMeta,auto_overload=False):
+        >>>     @overload
+        >>>     def a(self, val : int) -> str:
+        >>>         return 'int'
+        >>>     @overload
+        >>>     def a(self, val : str) -> str:
+        >>>         return 'str'
+    """
+    func.__overload__ = True
     return type_check(func)
+
+__exports__ = ['TypedMeta', 'OverloadObject', 'OverloadFunction', 'overload']

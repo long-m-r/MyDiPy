@@ -8,10 +8,19 @@ AUTOMATIC_CONVERSIONS = {
 }
 
 def cast(cls: Type, obj):
-    """Attempt to cast an object to a desired type.
-    Format is identical to MyPy's cast function and should be compatible.
+    """
+    Cast an object to a desired type via the `__cast__` magic method.
 
+    The format of `cast` is identical to MyPy's cast function and should be compatible.
     If the object is already of the correct class, it is passed through.
+
+    There is a mirror-image function `to` which also casts. It has an infix for `-to>>`
+
+    Therefore, all three of these formats are identical:
+        `cast(str,5.1) == to(5.1,str) == (5.1 -to>> str) == '5.1'`
+
+    While the `-to>>` format is easy to read, be careful as subtraction and bitshift operators
+    are in the middle of operator precedence. If using the infix, always use parentheses!
 
     Args:
         cls: Type to cast to
@@ -19,19 +28,29 @@ def cast(cls: Type, obj):
 
     Returns:
         The object cast to the target class
+
+    Raises:
+        TypeError: If the class cannot be converted automatically
+
+    Example:
+        >>> a = OverloadObject()
+        >>> cast(str, a) == str(a)
+        True
+        >>> cast(str, a) == a.__str__()
+        True
     """
     # If we are already done. Do nothing:
-    if cls is Any or isinstance(obj,cls):
+    if cls is Any or type(obj) == cls:
         return obj
 
     # If we have an object which looks castable (intentionally not catching errors here as they may be desired)
     if hasattr(obj,'__cast__'):
         # If it is typed, we can specify the return type which is what we want
         if getattr(obj.__cast__,'__typed__',False):
-            return obj.__cast__(cls,_returns=cls)
+            return obj.__cast__(_returns=cls)
         # If not, we'll just have to call it blindly and it can throw its own errors
         else:
-            return obj.__cast__(cls)
+            return obj.__cast__()
 
     # List of built-in conversion functions which can throw their own errors
     for k,v in AUTOMATIC_CONVERSIONS.items():
@@ -57,15 +76,13 @@ def cast(cls: Type, obj):
 @make_infix('sub','rshift')
 def to(obj, cls):
     """
-    Attempt to cast an object to a desired type.
     The mirror-image of cast. Cast an object to type
 
     Infixed for the format '-to>>' making the following equivalent
-        to(5.1,str)     == '5.1'
-        (5.1 -to>> str) == '5.1'
-    Be careful with the latter format as -to>> uses subtraction and bitwise shift operators
-    which are in the middle of operator precedence and lower than things like multiplication!
-    If using please use parentheses for each cast.
+        `cast(str,5.1) == to(5.1,str) == (5.1 -to>> str) == '5.1'`
+
+    While the `-to>>` format looks cool, be careful as subtraction and bitshift operators
+    are in the middle of operator precedence. If using the infix, always use parentheses!
 
     Args:
         obj: An object to be cast
@@ -73,6 +90,12 @@ def to(obj, cls):
 
     Returns:
         The object cast to the target class
+
+    Raises:
+        TypeError: If the class cannot be converted automatically
+
+    Note:
+        This function isn't getting auto-doc'd. I'm assuming it's the infix
     """
     return cast(cls,obj)
 

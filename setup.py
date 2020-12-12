@@ -5,14 +5,11 @@ if sys.version_info < (3,5):
 
 setup(
     name='MyPyR',
-    version='0.0.2',
-    description='Runtime-enforced type checking, casting, and overloads for Python 3',
+    version='0.0.1',
+    description='Runtime-enforced type checking, method/function overloading, multiple dispatch, inheritance, and casting for Python 3',
     author='Matthew Long',
     # author_email='null@null.com',
     license='MIT',
     packages=['mypyr'],
-    install_requires=['infix'],
-    extras_require={
-        'build': ["sphinx-autodoc-typehints","mypy","pyannotate"],
-    }
+    install_requires=['infix']
 )

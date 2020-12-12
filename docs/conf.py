@@ -24,9 +24,7 @@ copyright = '2018, Matthew Long'
 author = 'Matthew Long'
 
 # The short X.Y version
-version = '0.0.2'
-# The full version, including alpha/beta/rc tags
-release = ''
+version = release = '0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -47,7 +45,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = []
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -90,7 +88,7 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

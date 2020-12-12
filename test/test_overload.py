@@ -1,9 +1,9 @@
 import unittest
-from mypyr import overload, TypedObject, inherit
+from mypyr import overload, OverloadObject, inherit
 
 class TestOverload(unittest.TestCase):
 	def setUp(self):
-		class A(TypedObject):
+		class A(OverloadObject):
 			def __init__(self):
 				self.str="A"
 			@overload
@@ -13,7 +13,7 @@ class TestOverload(unittest.TestCase):
 			@overload
 			def test(self,val): raise ValueError()
 
-		class B(TypedObject):
+		class B(OverloadObject):
 			def __init__(self):
 				self.str="B"
 
@@ -24,7 +24,7 @@ class TestOverload(unittest.TestCase):
 			@overload
 			def test(self, nam): raise ValueError()
 
-		class C(TypedObject,auto_overload=True):
+		class C(OverloadObject,auto_overload=True):
 			def __init__(self):
 				self.str="C"
 

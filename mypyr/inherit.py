@@ -4,16 +4,6 @@ from typing import Type
 from functools import wraps
 from inspect import isfunction
 
-def _filter(func):
-    if getattr(func,'__typed__',False):
-        return func
-
-    def wrapper(*args,**kwargs):
-        kwargs.pop("_returns",None)
-        return func(*args,**kwargs)
-
-    return wraps(func)(wrapper)
-
 def inherit(*args,errors=(NotImplementedError)):
     """A decorator which automatically wraps the underlying function and instead calls a parent class
     The body of the wrapped function is entirely ignored.
@@ -41,7 +31,7 @@ def inherit(*args,errors=(NotImplementedError)):
         Child>Parent
 
         It is also possible to write Child as:
-        ... class Child:
+        >>> class Child:
         ...     @inherit(Parent)
         ...     def test(self,value): ...
 
@@ -76,6 +66,8 @@ def inherit(*args,errors=(NotImplementedError)):
             except errors:
                 pass
         raise TypeCheckError("could not find valid @inherit method for "+wrapped[0].__qualname__)
+
+    wrapper.__inherit__ = True
 
     # Create a decorator for the function
     def decorator(func: Function):
