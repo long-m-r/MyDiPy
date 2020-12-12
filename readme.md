@@ -26,7 +26,7 @@ The first example highlights method overloading, multiple dispatch, and overload
 >>> class B(OverloadObject, auto_overload=False):
 ...     @overload
 ...     def test(self, val: str) -> str:
-...         return "B="+self.str
+...         return "B="+val
 ...
 ...     @overload
 ...     def test(self, val: int) -> str:
