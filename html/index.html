@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MyPyR’s documentation &#8212; MyPyR 0.0.1 documentation</title>
+    <title>MyDiPy’s documentation &#8212; MyPyR 0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -31,8 +31,8 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="mypyr-s-documentation">
-<h1>MyPyR’s documentation<a class="headerlink" href="#mypyr-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="mydipy-s-documentation">
+<h1>MyDiPy’s documentation<a class="headerlink" href="#mydipy-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>A package implementing runtime type-checking and multiple-dispatch method overloading for Python 3+
 relying upon <a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484</a> annotation.</p>
 <dl class="simple">
@@ -52,7 +52,7 @@ of typed languages when desired while still allowing for the inherent flexibilit
 * This was developed as a proof-of-concept over a couple of weekends for fun. It has been tested on Python 3.6.9 and should generally work for Python 3.</p>
 <div class="section" id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>At a high-level, MyPyR lets you seamlessly implement type checking, method overloading, inheritance, and multiple dispatch all by inheriting from an instance of <cite>OverloadObject</cite> (or the <cite>TypedMeta</cite> MetaClass).</p>
+<p>At a high-level, MyDiPy lets you seamlessly implement type checking, method overloading, inheritance, and multiple dispatch all by inheriting from an instance of <cite>OverloadObject</cite> (or the <cite>TypedMeta</cite> MetaClass).</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -97,7 +97,7 @@ of typed languages when desired while still allowing for the inherent flexibilit
 42
 43
 44
-45</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span> <span class="kn">from</span> <span class="nn">mypyr</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">inherit</span>
+45</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span> <span class="kn">from</span> <span class="nn">mydipy</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">inherit</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create an overloadable parent class</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">):</span>
@@ -144,7 +144,7 @@ of typed languages when desired while still allowing for the inherent flexibilit
 <span class="go">B=test</span>
 </pre></div>
 </td></tr></table></div>
-<p>Furthermore, there is a basic casting system built into MyPyR (this is in the early stages):</p>
+<p>Furthermore, there is a basic casting system built into MyDiPy (this is in the early stages):</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -196,7 +196,7 @@ of typed languages when desired while still allowing for the inherent flexibilit
 49
 50
 51
-52</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mypyr</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="n">inherit</span>
+52</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mydipy</span> <span class="kn">import</span> <span class="n">OverloadObject</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="n">inherit</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Currency</span><span class="p">(</span><span class="n">OverloadObject</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="sd">&quot;&quot;&quot;Generic parent Currency Class&quot;&quot;&quot;</span>
@@ -272,9 +272,9 @@ get automatic casting to str, int, and bool via the normal Python magic methods.
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-<span class="target" id="module-mypyr"></span><dl class="py class">
-<dt id="mypyr.OverloadFunction">
-<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">OverloadFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.OverloadFunction" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="module-mydipy"></span><dl class="py class">
+<dt id="mydipy.OverloadFunction">
+<em class="property">class </em><code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">OverloadFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.OverloadFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator class allowing functions to be overloaded.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@OverloadFunction</span>
@@ -287,8 +287,8 @@ get automatic casting to str, int, and bool via the normal Python magic methods.
 </pre></div>
 </div>
 <dl class="py method">
-<dt id="mypyr.OverloadFunction.overload">
-<code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.OverloadFunction.overload" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.OverloadFunction.overload">
+<code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.OverloadFunction.overload" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add another overload definition to the current function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -303,8 +303,8 @@ get automatic casting to str, int, and bool via the normal Python magic methods.
 </dd></dl>
 
 <dl class="py class">
-<dt id="mypyr.OverloadObject">
-<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">OverloadObject</code><a class="headerlink" href="#mypyr.OverloadObject" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.OverloadObject">
+<em class="property">class </em><code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">OverloadObject</code><a class="headerlink" href="#mydipy.OverloadObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>An object allowing multiply defined functions to be overloaded</p>
 <p>You should generally inherit from this object if you want to have overloading
 and multiple dispatch, as well as support for targeted inheritance and casting
@@ -339,13 +339,13 @@ as provided by other parts of this module.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mypyr.TypeCheckError">
-<em class="property">exception </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">TypeCheckError</code><a class="headerlink" href="#mypyr.TypeCheckError" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.TypeCheckError">
+<em class="property">exception </em><code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">TypeCheckError</code><a class="headerlink" href="#mydipy.TypeCheckError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
-<dt id="mypyr.TypedMeta">
-<em class="property">class </em><code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">TypedMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.TypedMeta" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.TypedMeta">
+<em class="property">class </em><code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">TypedMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.TypedMeta" title="Permalink to this definition">¶</a></dt>
 <dd><p>A metaclass where function my be overloaded and executed with multiple dispatch.</p>
 <p>Generally one should inherit from OverloadObject unless there is a specific
 reason for not doing so (e.g., not having casting functionality)</p>
@@ -371,8 +371,8 @@ reason for not doing so (e.g., not having casting functionality)</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="mypyr.cast">
-<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">cast</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.cast" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.cast">
+<code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">cast</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.cast" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cast an object to a desired type via the <cite>__cast__</cite> magic method.</p>
 <p>The format of <cite>cast</cite> is identical to MyPy’s cast function and should be compatible.
 If the object is already of the correct class, it is passed through.</p>
@@ -408,8 +408,8 @@ are in the middle of operator precedence. If using the infix, always use parenth
 </dd></dl>
 
 <dl class="py function">
-<dt id="mypyr.inherit">
-<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">inherit</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">errors=&lt;class 'NotImplementedError'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.inherit" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.inherit">
+<code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">inherit</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">errors=&lt;class 'NotImplementedError'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.inherit" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator which automatically wraps the underlying function and instead calls a parent class
 The body of the wrapped function is entirely ignored.
 Annotations of the parent class will be applied to the wrapped function <strong>unless</strong> they are otherwise
@@ -459,8 +459,8 @@ which one to inherit from.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="mypyr.no_type_check">
-<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">no_type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.no_type_check" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.no_type_check">
+<code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">no_type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.no_type_check" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator which explicitly marks a class or method to NOT be type checked.</p>
 <p>When used to decorate a class, all annotated methods will not be type checked unless decorated
 with <cite>&#64;type_check</cite>. Note that this is the default behavior, but allows for consistency with
@@ -490,8 +490,8 @@ This behavior means that given:</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="mypyr.overload">
-<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.overload" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.overload">
+<code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">overload</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.overload" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overload decorator for class methods where auto_overload=False.</p>
 <p>If using this, use &#64;overload for every entry for any methods which are multiply
 defined.</p>
@@ -524,8 +524,8 @@ highlights the usage of this decorator:</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="mypyr.type_check">
-<code class="sig-prename descclassname">mypyr.</code><code class="sig-name descname">type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mypyr.type_check" title="Permalink to this definition">¶</a></dt>
+<dt id="mydipy.type_check">
+<code class="sig-prename descclassname">mydipy.</code><code class="sig-name descname">type_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mydipy.type_check" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator which wraps a function or class to enforce type checking.
 Type checking is matched against typing annotations in Python 3 as defined by
 <a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484</a>. No other annotations are
@@ -549,8 +549,8 @@ with <cite>&#64;no_type_check</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><a class="reference internal" href="#mypyr.TypeCheckError" title="mypyr.TypeCheckError"><strong>TypeCheckError</strong></a> – If there is a mismatch between a typed parameter and a passed argument when the function is called</p></li>
-<li><p><a class="reference internal" href="#mypyr.TypeCheckError" title="mypyr.TypeCheckError"><strong>TypeCheckError</strong></a> – If, when the function is called with a named <cite>_returns</cite> argument, that argument is not a subclass of the function’s annotated return type. Note that the type of the actual return value is NOT checked.</p></li>
+<li><p><a class="reference internal" href="#mydipy.TypeCheckError" title="mydipy.TypeCheckError"><strong>TypeCheckError</strong></a> – If there is a mismatch between a typed parameter and a passed argument when the function is called</p></li>
+<li><p><a class="reference internal" href="#mydipy.TypeCheckError" title="mydipy.TypeCheckError"><strong>TypeCheckError</strong></a> – If, when the function is called with a named <cite>_returns</cite> argument, that argument is not a subclass of the function’s annotated return type. Note that the type of the actual return value is NOT checked.</p></li>
 </ul>
 </dd>
 </dl>

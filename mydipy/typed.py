@@ -271,5 +271,3 @@ def overload(func):
     """
     func.__overload__ = True
     return type_check(func)
-
-__exports__ = ['TypedMeta', 'OverloadObject', 'OverloadFunction', 'overload']

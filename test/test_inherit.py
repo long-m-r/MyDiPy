@@ -1,5 +1,5 @@
 import unittest
-from mypyr import inherit
+from mydipy import inherit
 
 class TestInherit(unittest.TestCase):
 	def setUp(self):

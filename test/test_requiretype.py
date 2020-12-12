@@ -1,6 +1,6 @@
 import unittest
 from typing import Any
-from mypyr import type_check, no_type_check, TypeCheckError
+from mydipy import type_check, no_type_check, TypeCheckError
 
 class TestRequireType(unittest.TestCase):
 	def setUp(self):

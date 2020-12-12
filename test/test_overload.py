@@ -1,5 +1,5 @@
 import unittest
-from mypyr import overload, OverloadObject, inherit
+from mydipy import overload, OverloadObject, inherit
 
 class TestOverload(unittest.TestCase):
 	def setUp(self):

@@ -1,4 +1,4 @@
-MyPyR's documentation
+MyDiPy's documentation
 ======================
 
 A package implementing runtime type-checking and multiple-dispatch method overloading for Python 3+
@@ -21,12 +21,12 @@ Notes:
 
 Examples
 --------
-At a high-level, MyPyR lets you seamlessly implement type checking, method overloading, inheritance, and multiple dispatch all by inheriting from an instance of `OverloadObject` (or the `TypedMeta` MetaClass).
+At a high-level, MyDiPy lets you seamlessly implement type checking, method overloading, inheritance, and multiple dispatch all by inheriting from an instance of `OverloadObject` (or the `TypedMeta` MetaClass).
 
 .. code-block:: python
     :linenos:
 
-    >>>  from mypyr import OverloadObject, overload, inherit
+    >>>  from mydipy import OverloadObject, overload, inherit
     >>>
     >>> # Create an overloadable parent class
     >>> class A(OverloadObject):
@@ -72,12 +72,12 @@ At a high-level, MyPyR lets you seamlessly implement type checking, method overl
     >>> print(ex.test('test'))
     B=test
 
-Furthermore, there is a basic casting system built into MyPyR (this is in the early stages):
+Furthermore, there is a basic casting system built into MyDiPy (this is in the early stages):
 
 .. code-block:: python
     :linenos:
 
-    >>> from mypyr import OverloadObject, cast, to, inherit
+    >>> from mydipy import OverloadObject, cast, to, inherit
     >>> 
     >>> class Currency(OverloadObject):
     ...     """Generic parent Currency Class"""
@@ -155,5 +155,5 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-.. automodule:: mypyr
+.. automodule:: mydipy
     :members:
