@@ -7,7 +7,7 @@ What if Python was a typed language? Well other than breaking all existing code.
 What MyDiPy does is extend this functionality so that it *actually works at runtime* in a way you would expect. That means overloading functions, type checking on arguments, multiple dispatch, inheriting from parent classes, and even a unified casting framework.
 
 ## Note
-This is a proof-of-concept project from a couple of weekends of tinkering. I have not used this in any other projects (yet). While it seems to work remarkably well, there are [known issues](https://github.com/long-m-r/MyDiPy/issues) that need resolving.
+This is a proof-of-concept project from a couple of weekends of experimenting. I have not used this in any other projects (yet). While it seems to work remarkably well, there are [known issues](https://github.com/long-m-r/MyDiPy/issues) that need resolving.
 
 ## Examples
 The first example highlights method overloading, multiple dispatch, and overloading:
