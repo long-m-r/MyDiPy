@@ -1,6 +1,6 @@
 # MyDiPy
 
-What if Python was a typed language? Well other than breaking all existing code. But what if it could act like a typed when you want it to but retain the utility of a duck typed language otherwise?
+What if Python was a typed language? Well other than breaking all existing code. But what if it could act like a typed language when you want it to but retain the utility of a duck typed language otherwise?
 
 [PEP 484](https://www.python.org/dev/peps/pep-0484/) introduced nice type annotations for Python 3.5+, and packages such as [MyPy](https://github.com/python/mypy) allow you to leverage these to detect errors prior to runtime.
 
