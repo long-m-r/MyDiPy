@@ -88,7 +88,7 @@ And here's an example that shows how casting can work in practice:
 ...     @inherit
 ...     def __cast__(self): ...
 ...
-...     def __add__(self, oth : Currency) -> Currency:
+...     def __mul__(self, oth : Currency) -> Currency:
 ...         # Convert both to Dollars to do addition
 ...         if type(oth) != Dollar:
 ...             oth = cast(Dollar,oth)
@@ -111,7 +111,7 @@ $3.63
 >>> print(b -to>> Dollar)
 $3.63
 >>> # Automatically unit convert for addition
->>> print(a+b)
+>>> print(a*b)
 $18.15
 ```
 
