@@ -10,7 +10,7 @@ What MyDiPy does is extend this functionality so that it *actually works at runt
 This is a proof-of-concept project from a couple of weekends of experimenting. I have not used this in any other projects (yet). While it seems to work remarkably well, there are [known issues](https://github.com/long-m-r/MyDiPy/issues) that need resolving.
 
 ## Examples
-The first example highlights method overloading, multiple dispatch, and overloading:
+The first (extremely contrived) example highlights method overloading, multiple dispatch, and inheritance. It's basically a modification of one of the unit tests:
 ``` python
 >>>  from mydipy import OverloadObject, overload, inherit
 >>>
